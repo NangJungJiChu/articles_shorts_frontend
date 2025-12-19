@@ -1,0 +1,37 @@
+:root {
+  /* Base Colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Gray Scale */
+  --color-gray-50: #fbfbfb;
+  --color-gray-100: #f6f6f6;
+  --color-gray-200: #f1f1f1;
+  --color-gray-300: #e5e5e5;
+  --color-gray-400: #c3c3c3;
+  --color-gray-500: #a5a5a5;
+  --color-gray-600: #7b7b7b;
+  --color-gray-700: #676767;
+  --color-gray-800: #484848;
+  --color-gray-900: #262626;
+
+  /* Blue Scale */
+  --color-blue-50: #e2f1fc;
+  --color-blue-100: #b9ddf9;
+  --color-blue-200: #8dc7f6;
+  --color-blue-300: #60b2f1;
+  --color-blue-400: #3ba1f0;
+  --color-blue-500: #0f92ed;
+  --color-blue-600: #0b84df; /* Primary Color */
+  --color-blue-700: #0472cc;
+  --color-blue-800: #0061bb;
+  --color-blue-900: #00449c;
+
+  /* Semantic Colors */
+  --color-danger: #df0b0b;
+  --color-warning: #dfd80b;
+  --color-success: #0bdf0b;
+
+  /* Semantic Aliases */
+  --color-primary: var(--color-blue-600);
+}

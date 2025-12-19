@@ -1,11 +1,29 @@
 export interface Post {
-  id: string
-  author: string
+  id: number
   title: string
-  category: string
   content: string
-  likes: number
-  dislikes: number
-  comments: number
-  createdAt: string
+  author_username: string
+  category: string
+  category_name: string
+  is_nsfw: boolean
+  is_liked: boolean
+  like_count: number
+  created_at: string
+  comments: Comment[]
 }
+
+export interface Comment {
+  id: number
+  content: string
+  author_username: string
+  created_at: string
+}
+
+export interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
+export type PostListResponse = PaginatedResponse<Post>
