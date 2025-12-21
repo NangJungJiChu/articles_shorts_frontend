@@ -32,8 +32,12 @@ const localLikesCount = ref(props.likesCount)
 const renderedContent = computed(() => {
     // Replace /media/ with full URL for preview
     const rendered = md.render(props.content)
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-    return rendered.replace(/src="\/media\//g, `src="${baseUrl}/media/`)
+    const s3BaseUrl = import.meta.env.VITE_S3_BASE_URL || 'https://njjc-media.s3.ap-northeast-2.amazonaws.com'
+
+    let updated = rendered.replace(/src="\/media\/([^"]+)"/g, `src="${s3BaseUrl}/$1"`)
+    updated = updated.replace(/src="(?!(http|\/))([^"]+)"/g, `src="${s3BaseUrl}/$2"`)
+
+    return updated
 })
 
 const formatCount = (count: number | string) => {
