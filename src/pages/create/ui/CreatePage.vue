@@ -109,10 +109,15 @@ const uploadAndInsert = async (file: File) => {
 
 
 const handleImageUpload = async (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0]
-    if (!file) return
+    const files = (event.target as HTMLInputElement).files
+    if (!files || files.length === 0) return
 
-    await uploadAndInsert(file)
+    for (let i = 0; i < files.length; i++) {
+        if (files[i]) {
+            await uploadAndInsert(files[i]!)
+        }
+    }
+
     if (fileInput.value) fileInput.value.value = ''
 }
 
@@ -124,9 +129,11 @@ const handlePaste = async (event: ClipboardEvent) => {
         if (item.type.indexOf('image/') !== -1) {
             const file = item.getAsFile()
             if (file) {
-                event.preventDefault() // Prevent default paste behavior
+                // Don't prevent default immediately if we want to allow text paste too?
+                // But usually if image is mixed, we might just want the image.
+                // Let's prevent default to handle custom insertion.
+                event.preventDefault()
                 await uploadAndInsert(file)
-                return // Only upload the first image found
             }
         }
     }
@@ -160,20 +167,34 @@ const handleComplete = async () => {
         // We iterate through our map to find which ones are actually used
         // (User might have deleted some from the text area)
 
+        // filesToUpload array to preserve order for bulk upload
+        const filesToUpload: File[] = []
+        const blobUrlsToReplace: string[] = []
+
         for (const [blobUrl, file] of pendingImages.value.entries()) {
             if (finalContent.includes(blobUrl)) {
-                // Upload image
-                const response = await uploadImage(file)
-                // response.id is the UUID. 
-                // User wants to replace logic to use <id>.png
-                // If response.id is available, use it. Otherwise derive from url?
-                // The backend returns { id: "...", url: "..." }
-
-                const replacement = `${response.id}.png` // Based on user request
-                finalContent = finalContent.split(blobUrl).join(replacement)
+                filesToUpload.push(file)
+                blobUrlsToReplace.push(blobUrl)
+            } else {
+                // unused blob, revoke it
+                URL.revokeObjectURL(blobUrl)
             }
-            // Revoke object URL to free memory
-            URL.revokeObjectURL(blobUrl)
+        }
+
+        if (filesToUpload.length > 0) {
+            const responseList = await uploadImage(filesToUpload)
+
+            // Replace blobs with returned IDs
+            // Assuming responseList order matches filesToUpload order
+            responseList.forEach((response, index) => {
+                const blobUrl = blobUrlsToReplace[index]
+                // response is { id: string, url: string }
+                const replacement = `${response.id}.png`
+                if (blobUrl) {
+                    finalContent = finalContent.split(blobUrl).join(replacement)
+                    URL.revokeObjectURL(blobUrl)
+                }
+            })
         }
 
         // Clear pending images map
@@ -247,7 +268,8 @@ const handleComplete = async () => {
                     <Icon name="image" />
                     <span>{{ isUploading ? '업로드 중...' : '이미지 추가' }}</span>
                 </button>
-                <input ref="fileInput" type="file" accept="image/*" class="hidden-input" @change="handleImageUpload" />
+                <input ref="fileInput" type="file" accept="image/*" multiple class="hidden-input"
+                    @change="handleImageUpload" />
             </div>
         </div>
 

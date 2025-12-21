@@ -4,12 +4,13 @@ export interface UploadImageResponse {
   id: string
   url: string
 }
+;[]
 
-export const uploadImage = async (file: File): Promise<UploadImageResponse> => {
+export const uploadImage = async (files: File[]): Promise<UploadImageResponse[]> => {
   const formData = new FormData()
-  formData.append('image', file)
+  files.forEach((file) => formData.append('image', file))
 
-  const { data } = await httpClient.post<UploadImageResponse>(
+  const { data } = await httpClient.post<UploadImageResponse[]>(
     '/posts/api/upload/image/',
     formData,
     {
