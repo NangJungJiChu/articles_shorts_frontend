@@ -94,6 +94,7 @@ onUnmounted(() => {
 /* Ensure ShortsCard snaps */
 :deep(.shorts-card) {
     scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 
 .center-state {

@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
 import { Icon } from '@/shared/ui/icon'
+import { Modal } from '@/shared/ui/modal'
+import { CommentList } from '@/features/comment'
 import { toggleLikePost } from '@/features/post-interaction'
 
 interface Props {
@@ -21,6 +23,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const localIsLiked = ref(props.isLiked)
 const localLikesCount = ref(Number(props.likesCount))
+const isReportModalOpen = ref(false)
+const isCommentModalOpen = ref(false)
 
 watch(() => props.isLiked, (val) => localIsLiked.value = val)
 watch(() => props.likesCount, (val) => localLikesCount.value = Number(val))
@@ -67,6 +71,11 @@ const handleLike = async () => {
         localLikesCount.value = prevCount
         alert('Failed to like post')
     }
+}
+
+const handleReport = () => {
+    alert('신고가 접수되었습니다.')
+    isReportModalOpen.value = false
 }
 
 const isExpanded = ref(false)
@@ -149,14 +158,25 @@ onUnmounted(() => {
                 <span class="count">{{ formatCount(localLikesCount) }}</span>
             </button>
 
-            <button class="action-btn">
+            <button class="action-btn" @click.stop="isCommentModalOpen = true">
                 <Icon name="chat_bubble" />
                 <span class="count">{{ formatCount(commentsCount) }}</span>
             </button>
 
-            <button class="action-btn more-btn">
+            <Modal :isOpen="isCommentModalOpen" title="댓글" @close="isCommentModalOpen = false">
+                <CommentList :postId="postId" />
+            </Modal>
+
+            <button class="action-btn more-btn" @click.stop="isReportModalOpen = true">
                 <Icon name="more_vert" />
             </button>
+
+            <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+                <button class="menu-item" @click="handleReport">
+                    <Icon name="report" />
+                    <span>신고하기</span>
+                </button>
+            </Modal>
         </div>
 
         <!-- Overlay "Tap to expand" shown only when overflowed and NOT expanded -->
@@ -285,5 +305,24 @@ onUnmounted(() => {
 .count {
     font-size: 12px;
     font-weight: 600;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    color: var(--color-gray-900);
+}
+
+.menu-item:hover {
+    background-color: var(--color-gray-100, #f5f5f5);
 }
 </style>

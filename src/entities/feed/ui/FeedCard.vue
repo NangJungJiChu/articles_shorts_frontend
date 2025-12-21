@@ -5,8 +5,9 @@ import { Icon } from '@/shared/ui/icon'
 import { toggleLikePost } from '@/features/post-interaction'
 import { queryClient } from '@/shared/api'
 import { postKeys } from '@/entities/post'
-import { BottomSheet } from '@/shared/ui/bottom-sheet'
+
 import { CommentList } from '@/features/comment'
+import { Modal } from '@/shared/ui/modal'
 
 interface Props {
     title: string
@@ -28,6 +29,8 @@ const md = new MarkdownIt({
 
 const localIsLiked = ref(props.isLiked)
 const localLikesCount = ref(props.likesCount)
+const isReportModalOpen = ref(false)
+const isCommentModalOpen = ref(false)
 
 const renderedContent = computed(() => {
     // Replace /media/ with full URL for preview
@@ -69,6 +72,11 @@ const handleLike = async () => {
         alert('Failed to update like')
     }
 }
+
+const handleReport = () => {
+    alert('신고가 접수되었습니다.')
+    isReportModalOpen.value = false
+}
 </script>
 
 <template>
@@ -87,21 +95,25 @@ const handleLike = async () => {
                 <span class="count">{{ formatCount(localLikesCount) }}</span>
             </button>
 
-            <BottomSheet>
-                <template #trigger>
-                    <button class="action-btn">
-                        <Icon name="chat_bubble" />
-                        <span class="count">{{ formatCount(commentsCount) }}</span>
-                    </button>
-                </template>
-                <template #content>
-                    <CommentList :postId="postId" />
-                </template>
-            </BottomSheet>
+            <button class="action-btn" @click="isCommentModalOpen = true">
+                <Icon name="chat_bubble" />
+                <span class="count">{{ formatCount(commentsCount) }}</span>
+            </button>
 
-            <button class="action-btn more-btn">
+            <Modal :isOpen="isCommentModalOpen" title="댓글" @close="isCommentModalOpen = false">
+                <CommentList :postId="postId" />
+            </Modal>
+
+            <button class="action-btn more-btn" @click="isReportModalOpen = true">
                 <Icon name="more_vert" />
             </button>
+
+            <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+                <button class="menu-item" @click="handleReport">
+                    <Icon name="report" />
+                    <span>신고하기</span>
+                </button>
+            </Modal>
         </div>
     </article>
 </template>
@@ -183,5 +195,23 @@ const handleLike = async () => {
 
 .more-btn {
     margin-left: auto;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+    background-color: var(--color-gray-100, #f5f5f5);
 }
 </style>
