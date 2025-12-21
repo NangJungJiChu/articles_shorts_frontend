@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import MarkdownIt from 'markdown-it'
 import { Icon } from '@/shared/ui/icon'
-import { toggleLikePost } from '@/features/post-interaction'
+import { toggleLikePost, interactWithPost } from '@/features/post-interaction'
 import { queryClient } from '@/shared/api'
 import { postKeys } from '@/entities/post'
 
@@ -57,6 +57,7 @@ const handleLike = async () => {
     localLikesCount.value += localIsLiked.value ? 1 : -1
 
     try {
+        interactWithPost(props.postId, 'LIKE')
         const response = await toggleLikePost(props.postId)
         localIsLiked.value = response.is_liked
         localLikesCount.value = response.like_count
@@ -73,6 +74,52 @@ const handleLike = async () => {
     }
 }
 
+// --- Interaction Logic (View Duration) ---
+const cardRef = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+let startTime: number | 0 = 0
+
+const setupIntersectionObserver = () => {
+    if (!cardRef.value) return
+
+    observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Started viewing
+                startTime = Date.now()
+            } else {
+                // Stopped viewing
+                if (startTime !== 0) {
+                    const duration = Math.floor((Date.now() - startTime) / 1000)
+                    if (duration > 0) {
+                        interactWithPost(props.postId, 'VIEW', duration)
+                    }
+                    startTime = 0
+                }
+            }
+        })
+    }, {
+        threshold: 0.1 // 10% visible to count as viewing
+    })
+
+    observer.observe(cardRef.value)
+}
+
+onMounted(() => {
+    setupIntersectionObserver()
+})
+
+onUnmounted(() => {
+    if (observer) observer.disconnect()
+    // If unmounting while visible, flush duration
+    if (startTime !== 0) {
+        const duration = Math.floor((Date.now() - startTime) / 1000)
+        if (duration > 0) {
+            interactWithPost(props.postId, 'VIEW', duration)
+        }
+    }
+})
+
 const handleReport = () => {
     alert('신고가 접수되었습니다.')
     isReportModalOpen.value = false
@@ -80,7 +127,7 @@ const handleReport = () => {
 </script>
 
 <template>
-    <article class="feed-card">
+    <article class="feed-card" ref="cardRef">
         <div class="post-header">
             <h2 class="post-title">{{ title }}</h2>
         </div>

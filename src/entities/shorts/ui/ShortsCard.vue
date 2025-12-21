@@ -4,7 +4,7 @@ import MarkdownIt from 'markdown-it'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
 import { CommentList } from '@/features/comment'
-import { toggleLikePost } from '@/features/post-interaction'
+import { toggleLikePost, interactWithPost } from '@/features/post-interaction'
 
 interface Props {
     title: string
@@ -62,6 +62,7 @@ const handleLike = async () => {
     localLikesCount.value += localIsLiked.value ? 1 : -1
 
     try {
+        interactWithPost(props.postId, 'LIKE')
         const response = await toggleLikePost(props.postId)
         localIsLiked.value = response.is_liked
         localLikesCount.value = response.like_count
@@ -120,28 +121,60 @@ watch(renderedContent, () => {
     })
 }, { immediate: true })
 
+// --- Interaction Logic ---
+const cardRef = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 let resizeObserver: ResizeObserver | null = null
+let startTime: number = 0
 
 onMounted(() => {
-    // Use ResizeObserver to detect size changes (images loading, window resize, etc.)
+    // 1. IntersectionObserver for Duration
+    if (cardRef.value) {
+        observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    startTime = Date.now()
+                } else {
+                    if (startTime !== 0) {
+                        const duration = Math.floor((Date.now() - startTime) / 1000)
+                        if (duration > 0) {
+                            interactWithPost(props.postId, 'VIEW', duration)
+                        }
+                        startTime = 0
+                    }
+                }
+            })
+        }, { threshold: 0.5 }) // 50% needs to be visible
+        observer.observe(cardRef.value)
+    }
+
+    // 2. ResizeObserver for Content Overflow
     if (contentRef.value) {
-        resizeObserver = new ResizeObserver(() => {
-            checkOverflow()
-        })
+        resizeObserver = new ResizeObserver(() => checkOverflow())
         resizeObserver.observe(contentRef.value)
     }
 })
 
 onUnmounted(() => {
+    if (observer) observer.disconnect()
+
     if (resizeObserver) {
         resizeObserver.disconnect()
+    }
+
+    // Flush remaining view duration
+    if (startTime !== 0) {
+        const duration = Math.floor((Date.now() - startTime) / 1000)
+        if (duration > 0) {
+            interactWithPost(props.postId, 'VIEW', duration)
+        }
     }
 })
 </script>
 
 <template>
     <article class="shorts-card" :class="{ 'is-expanded': isExpanded, 'is-overflowing': isOverflowing }"
-        @click="toggleExpand">
+        @click="toggleExpand" ref="cardRef">
 
         <div class="shorts-content-wrapper" ref="contentRef">
             <div class="post-header">
