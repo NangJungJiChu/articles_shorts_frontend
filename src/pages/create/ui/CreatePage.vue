@@ -2,8 +2,7 @@
 import { ref, computed, nextTick, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import MarkdownIt from 'markdown-it'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
+
 import { Icon } from '@/shared/ui/icon'
 import { Combobox } from '@/shared/ui/combobox'
 import { uploadImage } from '@/features/upload/api/uploadImage'
@@ -91,7 +90,7 @@ const insertContent = async (text: string) => {
     }
 }
 
-const uploadAndInsert = async (file: File) => {
+const previewAndInsertImage = async (file: File) => {
     try {
         // Create local preview URL
         const blobUrl = URL.createObjectURL(file)
@@ -114,7 +113,7 @@ const handleImageUpload = async (event: Event) => {
 
     for (let i = 0; i < files.length; i++) {
         if (files[i]) {
-            await uploadAndInsert(files[i]!)
+            await previewAndInsertImage(files[i]!)
         }
     }
 
@@ -133,7 +132,7 @@ const handlePaste = async (event: ClipboardEvent) => {
                 // But usually if image is mixed, we might just want the image.
                 // Let's prevent default to handle custom insertion.
                 event.preventDefault()
-                await uploadAndInsert(file)
+                await previewAndInsertImage(file)
             }
         }
     }
@@ -189,7 +188,7 @@ const handleComplete = async () => {
             responseList.forEach((response, index) => {
                 const blobUrl = blobUrlsToReplace[index]
                 // response is { id: string, url: string }
-                const replacement = `${response.id}.png`
+                const replacement = `/media/${response.id}.png`
                 if (blobUrl) {
                     finalContent = finalContent.split(blobUrl).join(replacement)
                     URL.revokeObjectURL(blobUrl)
