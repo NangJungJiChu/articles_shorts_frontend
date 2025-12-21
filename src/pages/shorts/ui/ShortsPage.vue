@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onUnmounted, computed, watchEffect } from 'vue'
+import { ref, onUnmounted, computed, watch, watchEffect } from 'vue'
 import { ShortsCard } from '@/entities/shorts/ui'
 import { useInfiniteRecommendedShortsQuery } from '@/features/shorts'
+import { useVirtualizer } from '@tanstack/vue-virtual'
 
 // Use recommended shorts query
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
@@ -13,57 +14,76 @@ const shorts = computed(() => {
     return data.value.pages.flatMap((page) => page.results)
 })
 
-// IntersectionObserver for infinite scroll (last card or sentinel)
-// Since shorts are fullscreen, we might want to load more as we scroll near end
-const loadMoreTrigger = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
+// --- Virtual Scroll Setup ---
+const parentRef = ref<HTMLElement | null>(null)
 
-watchEffect(() => {
-    if (observer) {
-        observer.disconnect()
-    }
+// Pass options as a computed getter to make it reactive
+const rowVirtualizer = useVirtualizer(
+    computed(() => ({
+        count: shorts.value.length,
+        getScrollElement: () => parentRef.value,
+        estimateSize: () => window.innerHeight, // Assume full screen height per item
+        overscan: 1, // Keep 1 item above/below for smooth snapping
+    }))
+)
 
-    if (loadMoreTrigger.value) {
-        observer = new IntersectionObserver(
-            (entries) => {
-                const target = entries[0]
-                if (target && target.isIntersecting && hasNextPage.value && !isFetchingNextPage.value) {
-                    fetchNextPage()
-                }
-            },
-            { threshold: 0.1 },
-        )
-        observer.observe(loadMoreTrigger.value)
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize())
+
+// --- Infinite Scroll Logic (Virtual) ---
+watch(virtualRows, (newRows) => {
+    if (newRows.length === 0) return
+
+    const lastItem = newRows[newRows.length - 1]
+    const totalItems = shorts.value.length
+
+    // Trigger when we see one of the last 3 items
+    // Check if lastItem exists to satisfy TS
+    if (
+        lastItem &&
+        lastItem.index >= totalItems - 3 &&
+        hasNextPage.value &&
+        !isFetchingNextPage.value
+    ) {
+        fetchNextPage()
     }
 })
 
-onUnmounted(() => {
-    if (observer) {
-        observer.disconnect()
-    }
-})
 </script>
 
 <template>
     <div class="shorts-page">
         <!-- Loading -->
-        <div v-if="isLoading" class="center-state">
+        <div v-if="isLoading && shorts.length === 0" class="center-state">
             <span class="loading-spinner"></span>
         </div>
 
         <!-- Error -->
-        <div v-else-if="isError" class="center-state">
+        <div v-else-if="isError && shorts.length === 0" class="center-state">
             <p>Shorts를 불러오는데 실패했습니다.</p>
         </div>
 
         <!-- content -->
-        <div v-else class="shorts-container">
-            <ShortsCard v-for="item in shorts" :key="item.id" :title="item.title" :content="item.content"
-                :likes-count="item.like_count" :comments-count="item.comments.length" :is-liked="item.is_liked"
-                :post-id="item.id" class="shorts-card-item" />
-
-            <!-- Sentinel -->
-            <div ref="loadMoreTrigger" class="load-more-sentinel"></div>
+        <div v-else ref="parentRef" class="shorts-container">
+            <div :style="{
+                height: `${totalSize}px`,
+                width: '100%',
+                position: 'relative',
+            }">
+                <div v-for="virtualRow in virtualRows" :key="virtualRow.index" class="shorts-wrapper" :style="{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                }">
+                    <ShortsCard v-if="shorts[virtualRow.index]" :title="shorts[virtualRow.index]!.title"
+                        :content="shorts[virtualRow.index]!.content" :likes-count="shorts[virtualRow.index]!.like_count"
+                        :comments-count="shorts[virtualRow.index]!.comments.length"
+                        :is-liked="shorts[virtualRow.index]!.is_liked" :post-id="shorts[virtualRow.index]!.id" />
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -72,9 +92,6 @@ onUnmounted(() => {
 .shorts-page {
     width: 100%;
     height: 100vh;
-    /* Space for bottom nav */
-    background: black;
-    /* Usually shorts have dark bg, but designs show light */
     background: var(--color-white);
 }
 
@@ -85,14 +102,21 @@ onUnmounted(() => {
     scroll-snap-type: y mandatory;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    /* Important for virtual scrolling container */
+    contain: strict;
 }
 
 .shorts-container::-webkit-scrollbar {
     display: none;
 }
 
-/* Ensure ShortsCard snaps */
-:deep(.shorts-card) {
+/* Scroll Snap on Wrapper */
+.shorts-wrapper {
+    /* Virtual items are absolute, so we need to ensure snap works */
+    /* Note: Scroll snap with absolute positioning can be tricky.
+       Usually, snap aligns to the flow. 
+       TanStack Virtual + Scroll Snap is compatible if the container scrolls.
+    */
     scroll-snap-align: start;
     scroll-snap-stop: always;
 }
@@ -118,9 +142,5 @@ onUnmounted(() => {
     to {
         transform: rotate(360deg);
     }
-}
-
-.load-more-sentinel {
-    height: 1px;
 }
 </style>
