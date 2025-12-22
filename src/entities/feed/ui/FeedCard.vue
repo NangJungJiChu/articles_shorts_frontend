@@ -9,6 +9,9 @@ import { postKeys } from '@/entities/post'
 import { CommentList } from '@/features/comment'
 import { Modal } from '@/shared/ui/modal'
 
+import { useAuthStore } from '@/features/auth'
+import { deletePost } from '@/entities/post'
+
 interface Props {
     title: string
     author: string
@@ -124,6 +127,28 @@ const handleReport = () => {
     alert('신고가 접수되었습니다.')
     isReportModalOpen.value = false
 }
+
+const authStore = useAuthStore()
+const isAuthor = computed(() => {
+  console.log(authStore.user?.username, props.author)
+  console.log('authStore.user?.username === props.author', authStore.user?.username === props.author)
+    return authStore.user?.username === props.author
+})
+
+const handleDelete = async () => {
+    if (!confirm('정말 삭제하시겠습니까?')) return
+
+    try {
+        await deletePost(props.postId)
+        alert('게시글이 삭제되었습니다.')
+        // Invalidate queries to refresh list
+        queryClient.invalidateQueries({ queryKey: postKeys.lists() })
+        isReportModalOpen.value = false
+    } catch (error) {
+        console.error('Delete failed:', error)
+        alert('삭제에 실패했습니다.')
+    }
+}
 </script>
 
 <template>
@@ -156,6 +181,10 @@ const handleReport = () => {
             </button>
 
             <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                    <Icon name="delete" />
+                    <span>삭제하기</span>
+                </button>
                 <button class="menu-item" @click="handleReport">
                     <Icon name="report" />
                     <span>신고하기</span>
@@ -260,5 +289,9 @@ const handleReport = () => {
 
 .menu-item:hover {
     background-color: var(--color-gray-100, #f5f5f5);
+}
+
+.delete-btn {
+    color: #ef4444; /* Red color for delete */
 }
 </style>

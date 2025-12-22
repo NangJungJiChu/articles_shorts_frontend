@@ -3,9 +3,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
-import { loginApi } from '@/features/auth'
+import { loginApi, useAuthStore } from '@/features/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const username = ref('')
 const password = ref('')
 const isLoading = ref(false)
@@ -25,6 +26,9 @@ const handleLogin = async () => {
 
         localStorage.setItem('accessToken', response.access)
         localStorage.setItem('refreshToken', response.refresh)
+
+        // Fetch user info
+        await authStore.fetchUser()
 
         router.push('/')
     } catch (error) {

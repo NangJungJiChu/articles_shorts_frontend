@@ -46,3 +46,7 @@ export async function getCategoryList(): Promise<Category[]> {
   const { data } = await httpClient.get<Category[]>('/posts/categories/')
   return data
 }
+
+export async function deletePost(postId: number): Promise<void> {
+  await httpClient.delete(`/posts/delete/${postId}/`)
+}

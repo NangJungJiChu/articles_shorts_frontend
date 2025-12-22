@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { BottomTabBar } from '@/widgets/bottom-navigation/ui'
+import { useAuthStore } from '@/features/auth'
 
 const route = useRoute()
 const showBottomNav = computed(() => !!route.meta.requiresAuth)
+const authStore = useAuthStore()
+
+onMounted(() => {
+    // If token exists, fetch user
+    if (localStorage.getItem('accessToken')) {
+        authStore.fetchUser()
+    }
+})
 </script>
 
 <template>

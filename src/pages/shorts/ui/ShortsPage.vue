@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onUnmounted, computed, watch, watchEffect } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ShortsCard } from '@/entities/shorts/ui'
 import { useInfiniteRecommendedShortsQuery } from '@/features/shorts'
 import { useVirtualizer } from '@tanstack/vue-virtual'
@@ -81,7 +81,8 @@ watch(virtualRows, (newRows) => {
                     <ShortsCard v-if="shorts[virtualRow.index]" :title="shorts[virtualRow.index]!.title"
                         :content="shorts[virtualRow.index]!.content" :likes-count="shorts[virtualRow.index]!.like_count"
                         :comments-count="shorts[virtualRow.index]!.comments.length"
-                        :is-liked="shorts[virtualRow.index]!.is_liked" :post-id="shorts[virtualRow.index]!.id" />
+                        :is-liked="shorts[virtualRow.index]!.is_liked" :post-id="shorts[virtualRow.index]!.id"
+                        :author="shorts[virtualRow.index]!.author_username" />
                 </div>
             </div>
         </div>
@@ -114,7 +115,7 @@ watch(virtualRows, (newRows) => {
 .shorts-wrapper {
     /* Virtual items are absolute, so we need to ensure snap works */
     /* Note: Scroll snap with absolute positioning can be tricky.
-       Usually, snap aligns to the flow. 
+       Usually, snap aligns to the flow.
        TanStack Virtual + Scroll Snap is compatible if the container scrolls.
     */
     scroll-snap-align: start;

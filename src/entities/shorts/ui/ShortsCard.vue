@@ -13,6 +13,7 @@ interface Props {
     commentsCount?: number | string
     isLiked?: boolean
     postId: number
+    author: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -77,6 +78,31 @@ const handleLike = async () => {
 const handleReport = () => {
     alert('신고가 접수되었습니다.')
     isReportModalOpen.value = false
+}
+
+// --- Delete Logic ---
+import { useAuthStore } from '@/features/auth'
+import { deletePost } from '@/entities/post'
+import { queryClient } from '@/shared/api'
+
+const authStore = useAuthStore()
+const isAuthor = computed(() => {
+    return authStore.user?.username === props.author
+})
+
+const handleDelete = async () => {
+    if (!confirm('정말 삭제하시겠습니까?')) return
+
+    try {
+        await deletePost(props.postId)
+        alert('게시글이 삭제되었습니다.')
+        // Invalidate queries to refresh list
+        queryClient.invalidateQueries({ queryKey: ['shorts'] })
+        isReportModalOpen.value = false
+    } catch (error) {
+        console.error('Delete failed:', error)
+        alert('삭제에 실패했습니다.')
+    }
 }
 
 const isExpanded = ref(false)
@@ -205,6 +231,10 @@ onUnmounted(() => {
             </button>
 
             <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                    <Icon name="delete" />
+                    <span>삭제하기</span>
+                </button>
                 <button class="menu-item" @click="handleReport">
                     <Icon name="report" />
                     <span>신고하기</span>

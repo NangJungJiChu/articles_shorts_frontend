@@ -2,7 +2,7 @@
 export type { Post, PostListResponse, PaginatedResponse } from './model/types'
 
 // API
-export { getPostList, type GetPostListParams } from './api/api'
+export { getPostList, deletePost, type GetPostListParams } from './api/api'
 export {
   useInfinitePostListQuery,
   useInfiniteMyPostListQuery,

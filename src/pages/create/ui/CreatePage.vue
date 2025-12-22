@@ -55,16 +55,16 @@ const parsedContent = computed(() => {
     // Replace /media/ with full URL for preview
     const rendered = md.render(content.value)
     // For blob URLs, they work natively in browser, so no replacement needed for them.
-    // However, if we have existing images from server? 
+    // However, if we have existing images from server?
     // The user said "preview should show images saved in website memory".
     // That means the blob URLs should just work.
 
     // But we also need to support S3 display for existing posts if we ever edit them here?
-    // Or just unrelated. 
+    // Or just unrelated.
     // The previous code replaced /media/. Let's keep S3 replacement just in case.
     const s3BaseUrl = import.meta.env.VITE_S3_BASE_URL || 'https://njjc-media.s3.ap-northeast-2.amazonaws.com'
 
-    let updated = rendered.replace(/src="\/media\/([^"]+)"/g, `src="${s3BaseUrl}/$1"`)
+    const updated = rendered.replace(/src="\/media\/([^"]+)"/g, `src="${s3BaseUrl}/$1"`)
     return updated
 })
 
