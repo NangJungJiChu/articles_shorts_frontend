@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ShortsCard } from '@/entities/shorts/ui'
-import { useInfiniteRecommendedShortsQuery } from '@/features/shorts'
+import { useInfiniteRecommendedPostListQuery } from '@/entities/post'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 
 // Use recommended shorts query
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
-    useInfiniteRecommendedShortsQuery()
+    useInfiniteRecommendedPostListQuery()
 
 // Flatten all pages into single shorts array
 const shorts = computed(() => {

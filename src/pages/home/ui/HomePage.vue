@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onUnmounted, computed, watchEffect } from 'vue'
 import { FeedCard } from '@/entities/feed/ui'
-import { useInfinitePostListQuery } from '@/entities/post'
+import { useInfiniteRecommendedPostListQuery } from '@/entities/post'
 
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
-    useInfinitePostListQuery({ page_size: 10 })
+    useInfiniteRecommendedPostListQuery()
 
 // Flatten all pages into single posts array
 const posts = computed(() => {

@@ -50,3 +50,8 @@ export async function getCategoryList(): Promise<Category[]> {
 export async function deletePost(postId: number): Promise<void> {
   await httpClient.delete(`/posts/delete/${postId}/`)
 }
+
+export async function getRecommendedPostList(page = 1): Promise<PostListResponse> {
+  const { data } = await httpClient.get<PostListResponse>(`/posts/recommended/?page=${page}`)
+  return data
+}

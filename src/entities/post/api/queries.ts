@@ -5,6 +5,7 @@ import {
   getMyPostList,
   getLikedPostList,
   getCategoryList,
+  getRecommendedPostList,
   type GetPostListParams,
 } from './api'
 import type { PostListResponse } from '../model/types'
@@ -18,6 +19,7 @@ export const postKeys = {
   myList: (params: Omit<GetPostListParams, 'page'>) => [...postKeys.lists(), 'my', params] as const,
   likedList: (params: Omit<GetPostListParams, 'page'>) =>
     [...postKeys.lists(), 'liked', params] as const,
+  recommended: () => [...postKeys.lists(), 'recommended'] as const,
 }
 
 export function useInfinitePostListQuery(params: MaybeRef<Omit<GetPostListParams, 'page'>> = {}) {
@@ -59,5 +61,16 @@ export function useCategoryListQuery() {
   return useQuery({
     queryKey: ['categories'],
     queryFn: getCategoryList,
+  })
+}
+
+export function useInfiniteRecommendedPostListQuery() {
+  return useInfiniteQuery({
+    queryKey: computed(() => postKeys.recommended()),
+    queryFn: ({ pageParam = 1 }) => getRecommendedPostList(pageParam as number),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: PostListResponse, _allPages, lastPageParam) => {
+      return lastPage.next ? (lastPageParam as number) + 1 : undefined
+    },
   })
 }
