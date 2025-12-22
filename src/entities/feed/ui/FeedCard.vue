@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import MarkdownIt from 'markdown-it'
 import { Icon } from '@/shared/ui/icon'
 import { toggleLikePost, interactWithPost } from '@/features/post-interaction'
@@ -78,53 +78,15 @@ const handleLike = async () => {
 }
 
 // --- Interaction Logic (View Duration) ---
-const cardRef = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-let startTime: number | 0 = 0
-
-const setupIntersectionObserver = () => {
-    if (!cardRef.value) return
-
-    observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // Started viewing
-                startTime = Date.now()
-            } else {
-                // Stopped viewing
-                if (startTime !== 0) {
-                    const duration = Math.floor((Date.now() - startTime) / 1000)
-                    if (duration > 0) {
-                        interactWithPost(props.postId, 'VIEW', duration)
-                    }
-                    startTime = 0
-                }
-            }
-        })
-    }, {
-        threshold: 0.1 // 10% visible to count as viewing
-    })
-
-    observer.observe(cardRef.value)
-}
-
-onMounted(() => {
-    setupIntersectionObserver()
-})
-
-onUnmounted(() => {
-    if (observer) observer.disconnect()
-    // If unmounting while visible, flush duration
-    if (startTime !== 0) {
-        const duration = Math.floor((Date.now() - startTime) / 1000)
-        if (duration > 0) {
-            interactWithPost(props.postId, 'VIEW', duration)
-        }
-    }
-})
+// Removed as per request. FeedCard no longer tracks view duration.
 
 const handleReport = () => {
     alert('신고가 접수되었습니다.')
+    isReportModalOpen.value = false
+}
+
+const handleNotInterested = () => {
+    alert('관심없음으로 설정되었습니다.')
     isReportModalOpen.value = false
 }
 
@@ -188,6 +150,10 @@ const handleDelete = async () => {
                 <button class="menu-item" @click="handleReport">
                     <Icon name="report" />
                     <span>신고하기</span>
+                </button>
+                <button class="menu-item" @click="handleNotInterested">
+                    <Icon name="visibility_off" />
+                    <span>관심없음</span>
                 </button>
             </Modal>
         </div>

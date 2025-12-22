@@ -80,6 +80,11 @@ const handleReport = () => {
     isReportModalOpen.value = false
 }
 
+const handleNotInterested = () => {
+    alert('관심없음으로 설정되었습니다.')
+    isReportModalOpen.value = false
+}
+
 // --- Delete Logic ---
 import { useAuthStore } from '@/features/auth'
 import { deletePost } from '@/entities/post'
@@ -238,6 +243,10 @@ onUnmounted(() => {
                 <button class="menu-item" @click="handleReport">
                     <Icon name="report" />
                     <span>신고하기</span>
+                </button>
+                <button class="menu-item" @click="handleNotInterested">
+                    <Icon name="visibility_off" />
+                    <span>관심없음</span>
                 </button>
             </Modal>
         </div>
