@@ -9,7 +9,7 @@ export function useCreatePostMutation() {
 
   return useMutation({
     mutationFn: (payload: CreatePostPayload) => createPost(payload),
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: postKeys.all })
 

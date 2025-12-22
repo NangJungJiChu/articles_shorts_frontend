@@ -20,14 +20,14 @@ const selectTab = (tab: 'likes' | 'posts') => {
 <template>
     <div class="profile-tabs">
         <!-- Likes Tab -->
-        <button class="tab-item" :class="{ 'is-active': modelValue === 'likes' }" @click="selectTab('likes')">
-            <Icon name="favorite" :type="modelValue === 'likes' ? 'filled' : 'outlined'" />
+        <button class="tab-item" :class="{ 'is-active': props.modelValue === 'likes' }" @click="selectTab('likes')">
+            <Icon name="favorite" :type="props.modelValue === 'likes' ? 'filled' : 'outlined'" />
             <span class="tab-label">Likes</span>
         </button>
 
         <!-- Posts Tab -->
-        <button class="tab-item" :class="{ 'is-active': modelValue === 'posts' }" @click="selectTab('posts')">
-            <Icon name="article" :type="modelValue === 'posts' ? 'filled' : 'outlined'" />
+        <button class="tab-item" :class="{ 'is-active': props.modelValue === 'posts' }" @click="selectTab('posts')">
+            <Icon name="article" :type="props.modelValue === 'posts' ? 'filled' : 'outlined'" />
             <span class="tab-label">Posts</span>
         </button>
     </div>

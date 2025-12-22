@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted } from 'vue'
 import { Icon } from '@/shared/ui/icon'
 
 interface Props {
@@ -16,7 +16,7 @@ const handleClose = () => {
 
 // Prevent background scrolling when modal is open
 onMounted(() => {
-    // Watch logic could be added here if dynamic body lock is needed, 
+    // Watch logic could be added here if dynamic body lock is needed,
     // but for simplicity we assume simplistic usage or add watch in parent/here if strictly needed.
     // For now, let's keep it simple CSS-based overlay.
 })
@@ -26,11 +26,11 @@ onMounted(() => {
 <template>
     <Teleport to="body">
         <Transition name="modal-fade">
-            <div v-if="isOpen" class="modal-overlay" @click="handleClose">
+            <div v-if="props.isOpen" class="modal-overlay" @click="handleClose">
                 <div class="modal-container" @click.stop>
-                    <header class="modal-header" v-if="title || $slots.header">
+                    <header class="modal-header" v-if="props.title || $slots.header">
                         <slot name="header">
-                            <h3 class="modal-title">{{ title }}</h3>
+                            <h3 class="modal-title">{{ props.title }}</h3>
                         </slot>
                         <button class="close-btn" @click="handleClose">
                             <Icon name="close" />

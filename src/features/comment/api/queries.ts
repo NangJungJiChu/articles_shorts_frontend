@@ -12,7 +12,7 @@ export function useCommentListQuery(postId: MaybeRef<number>) {
   return useQuery({
     queryKey: commentKeys.list(postId),
     queryFn: ({ queryKey }) => {
-      const [_1, _2, id] = queryKey as [string, string, number]
+      const [, , id] = queryKey as [string, string, number]
       return getComments(id)
     },
     enabled: () => !!toValue(postId),

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { signupApi, loginApi } from '@/features/auth'
-import type { AxiosError } from 'axios'
+import { isAxiosError } from 'axios'
 
 const router = useRouter()
 const username = ref('')
@@ -42,9 +42,9 @@ const handleSignup = async () => {
         localStorage.setItem('refreshToken', response.refresh)
         router.push('/')
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Signup failed:', error)
-        if (error.response?.data?.username) {
+        if (isAxiosError(error) && error.response?.data?.username) {
             alert('Username already exists')
         } else {
             alert('Signup failed. Please try again.')

@@ -4,7 +4,6 @@ export interface UploadImageResponse {
   id: string
   url: string
 }
-;[]
 
 export const uploadImage = async (files: File[]): Promise<UploadImageResponse[]> => {
   const formData = new FormData()

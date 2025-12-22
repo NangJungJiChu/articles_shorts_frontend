@@ -1,17 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { BottomTabBar } from './index'
-import { createRouter, createWebHistory } from 'vue-router'
-import { HomePage } from '@/pages/home/ui'
 
-// Mock Router for Storybook
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    { path: '/', component: HomePage }, // Dummy routes
-    { path: '/shorts', component: { template: '<div>Shorts</div>' } },
-    { path: '/profile', component: { template: '<div>Profile</div>' } },
-  ],
-})
 
 const meta: Meta<typeof BottomTabBar> = {
   title: 'Widgets/BottomNavigation/BottomTabBar',
