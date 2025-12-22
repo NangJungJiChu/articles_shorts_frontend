@@ -90,6 +90,9 @@ importers:
       eslint-plugin-vue:
         specifier: ~10.5.1
         version: 10.5.1(@typescript-eslint/parser@8.49.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(vue-eslint-parser@10.2.0(eslint@9.39.2(jiti@2.6.1)))
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
