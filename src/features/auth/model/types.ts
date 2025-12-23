@@ -5,6 +5,8 @@ export interface LoginResponse {
 
 export interface User {
   username: string
+  email?: string
+  profile_img?: string
 }
 
 export interface SignupRequest {

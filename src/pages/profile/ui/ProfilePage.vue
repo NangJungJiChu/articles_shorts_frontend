@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect, onUnmounted } from 'vue'
 import { ProfileTabs } from '@/widgets/profile-info/ui'
+import { ProfileImageUploader } from '@/features/profile/update-profile-image'
 import { FeedCard } from '@/entities/feed/ui'
 import { useInfiniteMyPostListQuery, useInfiniteLikedPostListQuery } from '@/entities/post'
 
@@ -64,9 +65,9 @@ onUnmounted(() => {
     <div class="profile-page">
         <header class="profile-header">
             <div class="profile-info">
-                <div class="profile-image-container">
-                    <img src="/default-profile.svg" alt="Profile" class="profile-image" />
-                </div>
+                <ProfileImageUploader
+                    :current-image-url="authStore.user?.profile_img"
+                />
                 <h2 class="username">{{ authStore.user?.username }}</h2>
             </div>
         </header>
