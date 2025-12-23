@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import MarkdownIt from 'markdown-it'
+import { ref, toRef } from 'vue'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
 import { CommentList } from '@/features/comment'
-import { toggleLikePost, interactWithPost } from '@/features/post-interaction'
+import { useMarkdown } from '@/entities/post/lib/useMarkdown'
+import { usePostInteractions } from '@/entities/post/lib/usePostInteractions'
+import { useExpansion } from '../lib/useExpansion'
+import { useViewTracking } from '@/entities/post/lib/useViewTracking'
 
 interface Props {
     title: string
@@ -22,236 +24,117 @@ const props = withDefaults(defineProps<Props>(), {
     isLiked: false,
 })
 
-const localIsLiked = ref(props.isLiked)
-const localLikesCount = ref(Number(props.likesCount))
-const isReportModalOpen = ref(false)
-const isCommentModalOpen = ref(false)
+// Refs for composables
+const cardRef = ref<HTMLElement | null>(null)
+const contentRef = ref<HTMLElement | null>(null)
 
-watch(() => props.isLiked, (val) => localIsLiked.value = val)
-watch(() => props.likesCount, (val) => localLikesCount.value = Number(val))
+// 1. Post Interactions (Like, Delete, Report, etc.)
+const {
+    localIsLiked,
+    localLikesCount,
+    isReportModalOpen,
+    isCommentModalOpen,
+    isAuthor,
+    handleLike,
+    handleReport,
+    handleNotInterested,
+    handleDelete
+} = usePostInteractions(props)
 
-const md = new MarkdownIt({
-    html: false,
-    breaks: true,
-    linkify: true,
-})
+// 2. Expansion Logic
+const {
+    isExpanded,
+    isOverflowing,
+    checkOverflow,
+    toggleExpand
+} = useExpansion(contentRef)
 
-const renderedContent = computed(() => {
-    // Replace /media/ with full URL for preview
-    const rendered = md.render(props.content)
-    const s3BaseUrl = import.meta.env.VITE_S3_BASE_URL || 'https://njjc-media.s3.ap-northeast-2.amazonaws.com'
+// 3. Markdown Rendering & Image Tracking
+const { renderedContent } = useMarkdown(toRef(props, 'content'), contentRef, checkOverflow)
 
-    let updated = rendered.replace(/src="\/media\/([^"]+)"/g, `src="${s3BaseUrl}/$1"`)
-    updated = updated.replace(/src="(?!(http|\/))([^"]+)"/g, `src="${s3BaseUrl}/$2"`)
+// 4. View Tracking
+useViewTracking(props.postId, cardRef)
 
-    return updated
-})
-
+// --- Helper ---
 const formatCount = (count: number | string) => {
     if (typeof count === 'string') return count
     return new Intl.NumberFormat('en-US', {
         notation: 'compact',
         maximumFractionDigits: 1
-    }).format(count)
+    }).format(Number(count))
 }
-
-const handleLike = async () => {
-    const prevIsLiked = localIsLiked.value
-    const prevCount = localLikesCount.value
-
-    localIsLiked.value = !localIsLiked.value
-    localLikesCount.value += localIsLiked.value ? 1 : -1
-
-    try {
-        interactWithPost(props.postId, 'LIKE')
-        const response = await toggleLikePost(props.postId)
-        localIsLiked.value = response.is_liked
-        localLikesCount.value = response.like_count
-    } catch (error) {
-        console.error('Like toggle failed:', error)
-        localIsLiked.value = prevIsLiked
-        localLikesCount.value = prevCount
-        alert('Failed to like post')
-    }
-}
-
-const handleReport = () => {
-    alert('신고가 접수되었습니다.')
-    isReportModalOpen.value = false
-}
-
-const handleNotInterested = () => {
-    alert('관심없음으로 설정되었습니다.')
-    isReportModalOpen.value = false
-}
-
-// --- Delete Logic ---
-import { useAuthStore } from '@/features/auth'
-import { deletePost } from '@/entities/post'
-import { queryClient } from '@/shared/api'
-
-const authStore = useAuthStore()
-const isAuthor = computed(() => {
-    return authStore.user?.username === props.author
-})
-
-const handleDelete = async () => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
-
-    try {
-        await deletePost(props.postId)
-        alert('게시글이 삭제되었습니다.')
-        // Invalidate queries to refresh list
-        queryClient.invalidateQueries({ queryKey: ['shorts'] })
-        isReportModalOpen.value = false
-    } catch (error) {
-        console.error('Delete failed:', error)
-        alert('삭제에 실패했습니다.')
-    }
-}
-
-const isExpanded = ref(false)
-const isOverflowing = ref(false)
-const contentRef = ref<HTMLElement | null>(null)
-
-const toggleExpand = () => {
-    if (isOverflowing.value) {
-        isExpanded.value = !isExpanded.value
-    }
-}
-
-const checkOverflow = () => {
-    const el = contentRef.value
-    if (el) {
-        isOverflowing.value = el.scrollHeight > el.clientHeight
-    }
-}
-
-watch(isExpanded, (newVal) => {
-    if (!newVal && contentRef.value) {
-        contentRef.value.scrollTop = 0
-    }
-})
-
-
-// Watch rendered content changes to attach load listeners to new images
-watch(renderedContent, () => {
-    nextTick(() => {
-        if (!contentRef.value) return
-
-        const images = contentRef.value.querySelectorAll('img')
-        images.forEach((img) => {
-            if (img.complete) {
-                checkOverflow()
-            } else {
-                img.addEventListener('load', checkOverflow)
-            }
-        })
-        // Initial check
-        checkOverflow()
-    })
-}, { immediate: true })
-
-// --- Interaction Logic ---
-const cardRef = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-let resizeObserver: ResizeObserver | null = null
-let startTime: number = 0
-
-onMounted(() => {
-    // 1. IntersectionObserver for Duration
-    if (cardRef.value) {
-        observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    startTime = Date.now()
-                } else {
-                    if (startTime !== 0) {
-                        const duration = Math.floor((Date.now() - startTime) / 1000)
-                        if (duration > 0) {
-                            interactWithPost(props.postId, 'VIEW', duration)
-                        }
-                        startTime = 0
-                    }
-                }
-            })
-        }, { threshold: 0.5 }) // 50% needs to be visible
-        observer.observe(cardRef.value)
-    }
-
-    // 2. ResizeObserver for Content Overflow
-    if (contentRef.value) {
-        resizeObserver = new ResizeObserver(() => checkOverflow())
-        resizeObserver.observe(contentRef.value)
-    }
-})
-
-onUnmounted(() => {
-    if (observer) observer.disconnect()
-
-    if (resizeObserver) {
-        resizeObserver.disconnect()
-    }
-
-    // Flush remaining view duration
-    if (startTime !== 0) {
-        const duration = Math.floor((Date.now() - startTime) / 1000)
-        if (duration > 0) {
-            interactWithPost(props.postId, 'VIEW', duration)
-        }
-    }
-})
 </script>
 
 <template>
-    <article class="shorts-card" :class="{ 'is-expanded': isExpanded, 'is-overflowing': isOverflowing }"
-        @click="toggleExpand" ref="cardRef">
-
-        <div class="shorts-content-wrapper" ref="contentRef">
-            <div class="post-header">
+    <article
+        ref="cardRef"
+        class="shorts-card"
+        :class="{ 'is-expanded': isExpanded, 'is-overflowing': isOverflowing }"
+        @click="toggleExpand"
+    >
+        <!-- 1. Content Area -->
+        <div ref="contentRef" class="shorts-content-wrapper">
+            <header class="post-header">
                 <h2 class="post-title">{{ title }}</h2>
-            </div>
+            </header>
             <div class="post-content markdown-body" v-html="renderedContent"></div>
         </div>
 
-        <!-- Right Interaction Bar -->
+        <!-- 2. Interaction Bar -->
         <div class="actions-container" @click.stop>
+            <!-- Like Button -->
             <button class="action-btn" @click="handleLike">
-                <Icon name="favorite" :type="localIsLiked ? 'filled' : 'outlined'"
-                    :class="{ 'is-liked': localIsLiked }" />
+                <Icon
+                    name="favorite"
+                    :type="localIsLiked ? 'filled' : 'outlined'"
+                    :class="{ 'is-liked': localIsLiked }"
+                />
                 <span class="count">{{ formatCount(localLikesCount) }}</span>
             </button>
 
+            <!-- Comment Button -->
             <button class="action-btn" @click.stop="isCommentModalOpen = true">
                 <Icon name="chat_bubble" />
                 <span class="count">{{ formatCount(commentsCount) }}</span>
             </button>
 
-            <Modal :isOpen="isCommentModalOpen" title="댓글" @close="isCommentModalOpen = false">
-                <CommentList :postId="postId" />
-            </Modal>
-
+            <!-- More Options Button -->
             <button class="action-btn more-btn" @click.stop="isReportModalOpen = true">
                 <Icon name="more_vert" />
             </button>
-
-            <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
-                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
-                    <Icon name="delete" />
-                    <span>삭제하기</span>
-                </button>
-                <button class="menu-item" @click="handleReport">
-                    <Icon name="report" />
-                    <span>신고하기</span>
-                </button>
-                <button class="menu-item" @click="handleNotInterested">
-                    <Icon name="visibility_off" />
-                    <span>관심없음</span>
-                </button>
-            </Modal>
         </div>
 
-        <!-- Overlay "Tap to expand" shown only when overflowed and NOT expanded -->
+        <!-- 3. Modals -->
+        <!-- Comment Modal -->
+        <Modal
+            :isOpen="isCommentModalOpen"
+            title="댓글"
+            @close="isCommentModalOpen = false"
+        >
+            <CommentList :postId="postId" />
+        </Modal>
+
+        <!-- More Options Modal -->
+        <Modal
+            :isOpen="isReportModalOpen"
+            title="더보기"
+            @close="isReportModalOpen = false"
+        >
+            <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                <Icon name="delete" />
+                <span>삭제하기</span>
+            </button>
+            <button class="menu-item" @click="handleReport">
+                <Icon name="report" />
+                <span>신고하기</span>
+            </button>
+            <button class="menu-item" @click="handleNotInterested">
+                <Icon name="visibility_off" />
+                <span>관심없음</span>
+            </button>
+        </Modal>
+
+        <!-- 4. Overlays -->
         <div v-if="isOverflowing && !isExpanded" class="expand-overlay">
             <span class="expand-text">Tap to expand</span>
         </div>
@@ -268,15 +151,15 @@ onUnmounted(() => {
     cursor: pointer;
 }
 
+/* Content Area */
 .shorts-content-wrapper {
     height: 100%;
     padding: 24px 16px;
-    padding-bottom: calc(58px + 24px);
+    padding-bottom: calc(58px + 104px); /* Space for expansion overlay & interaction padding */
     overflow: hidden;
     box-sizing: border-box;
 }
 
-/* Expanded State */
 .shorts-card.is-expanded .shorts-content-wrapper {
     overflow-y: auto;
     -ms-overflow-style: none;
@@ -295,7 +178,7 @@ onUnmounted(() => {
     font-family: var(--font-family-base);
     font-size: 24px;
     font-weight: 700;
-    color: #000;
+    color: var(--color-black, #000);
     margin: 0;
 }
 
@@ -303,51 +186,29 @@ onUnmounted(() => {
     font-family: var(--font-family-base);
     font-size: 14px;
     line-height: 1.5;
-    color: #333;
+    color: var(--color-gray-800, #333);
     padding-bottom: 40px;
 }
 
-/* Markdown Image Sizing */
+/* Markdown Specifics */
 :deep(img) {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
     margin-top: 8px;
-    background-color: #f0f0f0;
+    background-color: var(--color-gray-100, #f0f0f0);
 }
 
 :deep(p) {
     margin: 0 0 8px 0;
-    line-height: var(--font-body-large-line-height);
+    line-height: var(--font-body-large-line-height, 1.5);
 }
 
 :deep(p:last-child) {
     margin-bottom: 0;
 }
 
-/* Overlay Styles */
-.expand-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: calc(120px + 58px);
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-bottom: 24px;
-    pointer-events: none;
-}
-
-.expand-text {
-    font-family: var(--font-family-base);
-    font-size: 14px;
-    font-weight: 600;
-    color: #000;
-}
-
-/* Interaction Bar Styles */
+/* Interaction Bar */
 .actions-container {
     position: absolute;
     bottom: 50%;
@@ -357,6 +218,7 @@ onUnmounted(() => {
     gap: 24px;
     align-items: center;
     z-index: 10;
+    transform: translateY(50%);
 }
 
 .action-btn {
@@ -374,11 +236,16 @@ onUnmounted(() => {
     font-size: 32px;
 }
 
+.action-btn .icon.is-liked {
+    color: var(--color-red-500, #ff4d4f);
+}
+
 .count {
     font-size: 12px;
     font-weight: 600;
 }
 
+/* Modals & Menu Items */
 .menu-item {
     display: flex;
     align-items: center;
@@ -396,5 +263,31 @@ onUnmounted(() => {
 
 .menu-item:hover {
     background-color: var(--color-gray-100, #f5f5f5);
+}
+
+.menu-item.delete-btn {
+    color: var(--color-red-500, #ff4d4f);
+}
+
+/* Overlays */
+.expand-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent 0%, var(--color-white) 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 24px;
+    pointer-events: none;
+}
+
+.expand-text {
+    font-family: var(--font-family-base);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-gray-900);
 }
 </style>

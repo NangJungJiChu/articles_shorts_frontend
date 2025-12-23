@@ -30,15 +30,12 @@ const rowVirtualizer = useVirtualizer(
 const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems())
 const totalSize = computed(() => rowVirtualizer.value.getTotalSize())
 
-// --- Infinite Scroll Logic (Virtual) ---
 watch(virtualRows, (newRows) => {
     if (newRows.length === 0) return
 
     const lastItem = newRows[newRows.length - 1]
     const totalItems = shorts.value.length
 
-    // Trigger when we see one of the last 3 items
-    // Check if lastItem exists to satisfy TS
     if (
         lastItem &&
         lastItem.index >= totalItems - 3 &&

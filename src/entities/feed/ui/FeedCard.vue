@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import MarkdownIt from 'markdown-it'
+import { ref, toRef } from 'vue'
 import { Icon } from '@/shared/ui/icon'
-import { toggleLikePost, interactWithPost } from '@/features/post-interaction'
-import { queryClient } from '@/shared/api'
-import { postKeys } from '@/entities/post'
-
-import { CommentList } from '@/features/comment'
 import { Modal } from '@/shared/ui/modal'
-
-import { useAuthStore } from '@/features/auth'
-import { deletePost } from '@/entities/post'
+import { CommentList } from '@/features/comment'
+import { postKeys } from '@/entities/post'
+import { useMarkdown } from '@/entities/post/lib/useMarkdown'
+import { usePostInteractions } from '@/entities/post/lib/usePostInteractions'
+import { useViewTracking } from '@/entities/post/lib/useViewTracking'
 
 interface Props {
     title: string
@@ -24,148 +20,118 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const md = new MarkdownIt({
-    html: false, // Security: disable HTML tags
-    breaks: true, // Convert \n to <br>
-    linkify: true, // Autoconvert URL-like text to links
-})
+// Refs for composables
+const cardRef = ref<HTMLElement | null>(null)
+const contentRef = ref<HTMLElement | null>(null)
 
-const localIsLiked = ref(props.isLiked)
-const localLikesCount = ref(props.likesCount)
-const isReportModalOpen = ref(false)
-const isCommentModalOpen = ref(false)
+// 1. Post Interactions (Like, Delete, etc.)
+// Passing invalidation keys for both general lists and the liked list
+const {
+    localIsLiked,
+    localLikesCount,
+    isReportModalOpen,
+    isCommentModalOpen,
+    isAuthor,
+    handleLike,
+    handleReport,
+    handleNotInterested,
+    handleDelete
+} = usePostInteractions(props, [postKeys.likedList({ page_size: 10 })])
 
-const renderedContent = computed(() => {
-    // Replace /media/ with full URL for preview
-    const rendered = md.render(props.content)
-    const s3BaseUrl = import.meta.env.VITE_S3_BASE_URL || 'https://njjc-media.s3.ap-northeast-2.amazonaws.com'
+// 2. Markdown Rendering
+const { renderedContent } = useMarkdown(toRef(props, 'content'), contentRef)
 
-    let updated = rendered.replace(/src="\/media\/([^"]+)"/g, `src="${s3BaseUrl}/$1"`)
-    updated = updated.replace(/src="(?!(http|\/))([^"]+)"/g, `src="${s3BaseUrl}/$2"`)
+// 3. View Tracking
+useViewTracking(props.postId, cardRef)
 
-    return updated
-})
-
+// --- Helper ---
 const formatCount = (count: number | string) => {
-    if (typeof count === 'string') return count
-    return count > 999 ? `${(count / 1000).toFixed(1)}k` : count
-}
-
-const handleLike = async () => {
-    // Optimistic Update
-    const prevIsLiked = localIsLiked.value
-    const prevCount = localLikesCount.value
-
-    localIsLiked.value = !localIsLiked.value
-    localLikesCount.value += localIsLiked.value ? 1 : -1
-
-    try {
-        interactWithPost(props.postId, 'LIKE')
-        const response = await toggleLikePost(props.postId)
-        localIsLiked.value = response.is_liked
-        localLikesCount.value = response.like_count
-
-        queryClient.invalidateQueries({
-            queryKey: postKeys.likedList({ page_size: 10 }),
-        })
-    } catch (error) {
-        console.error('Like toggle failed:', error)
-        // Rollback
-        localIsLiked.value = prevIsLiked
-        localLikesCount.value = prevCount
-        alert('Failed to update like')
-    }
-}
-
-// --- Interaction Logic (View Duration) ---
-// Removed as per request. FeedCard no longer tracks view duration.
-
-const handleReport = () => {
-    alert('신고가 접수되었습니다.')
-    isReportModalOpen.value = false
-}
-
-const handleNotInterested = () => {
-    alert('관심없음으로 설정되었습니다.')
-    isReportModalOpen.value = false
-}
-
-const authStore = useAuthStore()
-const isAuthor = computed(() => {
-  console.log(authStore.user?.username, props.author)
-  console.log('authStore.user?.username === props.author', authStore.user?.username === props.author)
-    return authStore.user?.username === props.author
-})
-
-const handleDelete = async () => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
-
-    try {
-        await deletePost(props.postId)
-        alert('게시글이 삭제되었습니다.')
-        // Invalidate queries to refresh list
-        queryClient.invalidateQueries({ queryKey: postKeys.lists() })
-        isReportModalOpen.value = false
-    } catch (error) {
-        console.error('Delete failed:', error)
-        alert('삭제에 실패했습니다.')
-    }
+    const num = Number(count)
+    if (isNaN(num)) return count
+    return num > 999 ? `${(num / 1000).toFixed(1)}k` : num
 }
 </script>
 
 <template>
-    <article class="feed-card" ref="cardRef">
-        <div class="post-header">
-            <h2 class="post-title">{{ title }}</h2>
+    <article ref="cardRef" class="feed-card">
+        <!-- 1. Content Area -->
+        <div ref="contentRef" class="feed-content-wrapper">
+            <header class="post-header">
+                <h2 class="post-title">{{ title }}</h2>
+            </header>
+            <div class="post-content markdown-body" v-html="renderedContent"></div>
         </div>
 
-        <!-- Markdown Content (Text + Images) -->
-        <div class="post-content markdown-body" v-html="renderedContent"></div>
-
-        <div class="post-footer">
+        <!-- 2. Interaction Footer -->
+        <footer class="post-footer">
+            <!-- Like Button -->
             <button class="action-btn" @click="handleLike">
-                <Icon name="favorite" :type="localIsLiked ? 'filled' : 'outlined'"
-                    :class="{ 'is-liked': localIsLiked }" />
+                <Icon
+                    name="favorite"
+                    :type="localIsLiked ? 'filled' : 'outlined'"
+                    :class="{ 'is-liked': localIsLiked }"
+                />
                 <span class="count">{{ formatCount(localLikesCount) }}</span>
             </button>
 
+            <!-- Comment Button -->
             <button class="action-btn" @click="isCommentModalOpen = true">
                 <Icon name="chat_bubble" />
                 <span class="count">{{ formatCount(commentsCount) }}</span>
             </button>
 
-            <Modal :isOpen="isCommentModalOpen" title="댓글" @close="isCommentModalOpen = false">
-                <CommentList :postId="postId" />
-            </Modal>
-
+            <!-- More Options Button -->
             <button class="action-btn more-btn" @click="isReportModalOpen = true">
                 <Icon name="more_vert" />
             </button>
+        </footer>
 
-            <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
-                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
-                    <Icon name="delete" />
-                    <span>삭제하기</span>
-                </button>
-                <button class="menu-item" @click="handleReport">
-                    <Icon name="report" />
-                    <span>신고하기</span>
-                </button>
-                <button class="menu-item" @click="handleNotInterested">
-                    <Icon name="visibility_off" />
-                    <span>관심없음</span>
-                </button>
-            </Modal>
-        </div>
+        <!-- 3. Modals -->
+        <!-- Comment Modal -->
+        <Modal
+            :isOpen="isCommentModalOpen"
+            title="댓글"
+            @close="isCommentModalOpen = false"
+        >
+            <CommentList :postId="postId" />
+        </Modal>
+
+        <!-- More Options Modal -->
+        <Modal
+            :isOpen="isReportModalOpen"
+            title="더보기"
+            @close="isReportModalOpen = false"
+        >
+            <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                <Icon name="delete" />
+                <span>삭제하기</span>
+            </button>
+            <button class="menu-item" @click="handleReport">
+                <Icon name="report" />
+                <span>신고하기</span>
+            </button>
+            <button class="menu-item" @click="handleNotInterested">
+                <Icon name="visibility_off" />
+                <span>관심없음</span>
+            </button>
+        </Modal>
     </article>
 </template>
 
 <style scoped>
 .feed-card {
     width: 100%;
-    max-width: 600px;
+    max-width: 610px;
     background: var(--color-white);
     padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-bottom: 1px solid var(--color-gray-100, #f5f5f5);
+}
+
+/* Content Area */
+.feed-content-wrapper {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -179,66 +145,76 @@ const handleDelete = async () => {
     font-family: var(--font-family-base);
     font-size: 24px;
     font-weight: 700;
-    color: #000;
+    color: var(--color-black, #000);
     margin: 0;
 }
 
-/* Markdown Styles */
 .post-content {
     padding: 0 16px;
     font-family: var(--font-family-base);
     font-size: 14px;
     line-height: 1.5;
-    color: #333;
+    color: var(--color-gray-800, #333);
 }
 
-/* Ensure images in markdown fit the card */
+/* Markdown Specifics */
 :deep(img) {
     max-width: 100%;
     height: auto;
     border-radius: 8px;
     margin-top: 8px;
-    background-color: #f0f0f0;
-    /* Placeholder bg */
+    background-color: var(--color-gray-100, #f0f0f0);
 }
 
-/* Allow paragraphs to have spacing */
 :deep(p) {
     margin: 0 0 8px 0;
+    line-height: var(--font-body-large-line-height, 1.5);
 }
 
 :deep(p:last-child) {
     margin-bottom: 0;
 }
 
+/* Interaction Footer */
 .post-footer {
     padding: 0 16px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 20px;
 }
 
 .action-btn {
-    background: none;
-    border: none;
-    padding: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    background: none;
+    border: none;
     cursor: pointer;
-    color: #000;
+    color: var(--color-gray-900);
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+    background-color: var(--color-gray-50, #fafafa);
+}
+
+.action-btn .icon.is-liked {
+    color: var(--color-red-500, #ff4c4c);
 }
 
 .count {
     font-family: var(--font-family-base);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .more-btn {
     margin-left: auto;
 }
 
+/* Modal Menu Items */
 .menu-item {
     display: flex;
     align-items: center;
@@ -251,13 +227,14 @@ const handleDelete = async () => {
     cursor: pointer;
     border-radius: 8px;
     transition: background-color 0.2s;
+    color: var(--color-gray-900);
 }
 
 .menu-item:hover {
     background-color: var(--color-gray-100, #f5f5f5);
 }
 
-.delete-btn {
-    color: #ef4444; /* Red color for delete */
+.menu-item.delete-btn {
+    color: var(--color-red-500, #ff4c4c);
 }
 </style>
