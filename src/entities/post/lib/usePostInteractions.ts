@@ -1,5 +1,5 @@
 import { ref, watch } from 'vue'
-import { toggleLikePost, interactWithPost } from '@/features/post-interaction'
+import { toggleLikePost, interactWithPost, reportPost } from '@/features/post-interaction'
 import { deletePost } from '@/entities/post'
 import { queryClient } from '@/shared/api'
 import { useAuthStore } from '@/features/auth'
@@ -35,7 +35,6 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
     localLikesCount.value += localIsLiked.value ? 1 : -1
 
     try {
-      interactWithPost(props.postId, 'LIKE')
       const response = await toggleLikePost(props.postId)
       localIsLiked.value = response.is_liked
       localLikesCount.value = response.like_count
@@ -51,14 +50,29 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
     }
   }
 
-  const handleReport = () => {
-    alert('신고가 접수되었습니다.')
-    isReportModalOpen.value = false
+  const handleReport = async (reason: string) => {
+    if (!reason) return
+    try {
+      await reportPost(props.postId, reason)
+      alert('신고가 접수되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      queryClient.invalidateQueries({ queryKey: ['shorts'] })
+      isReportModalOpen.value = false
+    } catch (error) {
+      console.error('Report failed:', error)
+      alert('신고에 실패했습니다.')
+    }
   }
 
-  const handleNotInterested = () => {
-    alert('관심없음으로 설정되었습니다.')
-    isReportModalOpen.value = false
+  const handleNotInterested = async () => {
+    try {
+      await interactWithPost(props.postId, 'NOT_INTERESTED')
+      alert('관심없음으로 설정되었습니다.')
+      isReportModalOpen.value = false
+    } catch (error) {
+      console.error('Not interested action failed:', error)
+      alert('설정에 실패했습니다.')
+    }
   }
 
   const handleDelete = async () => {

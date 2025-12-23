@@ -38,6 +38,19 @@ const {
     handleDelete
 } = usePostInteractions(props, [postKeys.likedList({ page_size: 10 })])
 
+const isReasonModalOpen = ref(false)
+const reportReason = ref('')
+
+const handleOpenReasonModal = () => {
+    isReportModalOpen.value = false
+    isReasonModalOpen.value = true
+}
+
+const handleCloseReasonModal = () => {
+    isReasonModalOpen.value = false
+    reportReason.value = ''
+}
+
 // 2. Markdown Rendering
 const { renderedContent } = useMarkdown(toRef(props, 'content'), contentRef)
 
@@ -97,23 +110,51 @@ const formatCount = (count: number | string) => {
         </Modal>
 
         <!-- More Options Modal -->
+        <!-- More Options Modal -->
         <Modal
             :isOpen="isReportModalOpen"
             title="더보기"
             @close="isReportModalOpen = false"
         >
-            <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
-                <Icon name="delete" />
-                <span>삭제하기</span>
-            </button>
-            <button class="menu-item" @click="handleReport">
-                <Icon name="report" />
-                <span>신고하기</span>
-            </button>
-            <button class="menu-item" @click="handleNotInterested">
-                <Icon name="visibility_off" />
-                <span>관심없음</span>
-            </button>
+            <div class="menu-list">
+                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                    <Icon name="delete" />
+                    <span>삭제하기</span>
+                </button>
+                <button class="menu-item" @click="handleOpenReasonModal">
+                    <Icon name="report" />
+                    <span>신고/차단하기</span>
+                </button>
+                <button class="menu-item" @click="handleNotInterested">
+                    <Icon name="visibility_off" />
+                    <span>관심없음</span>
+                </button>
+            </div>
+        </Modal>
+
+        <!-- Report Reason Modal -->
+        <Modal
+            :isOpen="isReasonModalOpen"
+            title="신고 사유 입력"
+            @close="handleCloseReasonModal"
+        >
+            <div class="report-reason-container">
+                <textarea
+                    v-model="reportReason"
+                    class="reason-input"
+                    placeholder="신고 사유를 입력해주세요..."
+                ></textarea>
+                <div class="report-actions">
+                    <button class="cancel-btn" @click="handleCloseReasonModal">취소</button>
+                    <button
+                        class="submit-btn"
+                        :disabled="!reportReason.trim()"
+                        @click="handleReport(reportReason); handleCloseReasonModal()"
+                    >
+                        신고
+                    </button>
+                </div>
+            </div>
         </Modal>
     </article>
 </template>
@@ -236,5 +277,54 @@ const formatCount = (count: number | string) => {
 
 .menu-item.delete-btn {
     color: var(--color-red-500, #ff4c4c);
+}
+
+/* Report Reason Styling */
+.report-reason-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.reason-input {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    border: 1px solid var(--color-gray-200);
+    border-radius: 8px;
+    resize: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.report-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.cancel-btn, .submit-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.cancel-btn {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+}
+
+.submit-btn {
+    background: var(--color-red-500);
+    color: white;
+}
+
+.submit-btn:disabled {
+    background: var(--color-gray-300);
+    cursor: not-allowed;
 }
 </style>
