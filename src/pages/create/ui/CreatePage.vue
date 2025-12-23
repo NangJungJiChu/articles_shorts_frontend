@@ -1,230 +1,47 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, watchEffect } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import MarkdownIt from 'markdown-it'
 
 import { Icon } from '@/shared/ui/icon'
 import { Combobox } from '@/shared/ui/combobox'
 import { Button } from '@/shared/ui/button'
-import { uploadImage } from '@/features/upload/api/uploadImage'
-import { useCreatePostMutation, useCategoryListQuery } from '@/entities/post'
+
+import { useCategorySelect } from '../model/useCategorySelect'
+import { useMarkdownEditor } from '../model/useMarkdownEditor'
+import { useImageHandler } from '../model/useImageHandler'
+import { usePostSubmit } from '../model/usePostSubmit'
 
 const router = useRouter()
 const activeTab = ref<'write' | 'preview'>('write')
 const title = ref('')
-const content = ref('')
-const categoryId = ref<string | null>(null)
-const isUploading = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
-const textareaRef = ref<HTMLTextAreaElement | null>(null)
-const pendingImages = ref<Map<string, File>>(new Map())
 
+// 1. Category Logic
+const { categoryId, categoryOptions } = useCategorySelect()
 
-// Queries
-const { data: categories } = useCategoryListQuery()
+// 2. Editor Logic
+const { content, textareaRef, parsedContent, insertContent } = useMarkdownEditor()
 
-// Options for Combobox
-const categoryOptions = computed(() => {
-    return categories.value?.map(cat => ({
-        id: cat.id,
-        label: cat.name
-    })) || []
+// 3. Image Logic
+const {
+    isUploading,
+    fileInput,
+    pendingImages,
+    handleImageUpload,
+    handlePaste,
+    triggerFileUpload
+} = useImageHandler(insertContent)
+
+// 4. Submission Logic
+const { isSubmitting, submitPost } = usePostSubmit({
+    title,
+    content,
+    categoryId,
+    pendingImages
 })
-
-// Set default category if available
-watchEffect(() => {
-    if (!categoryId.value && categoryOptions.value.length > 0) {
-        // Default to 'mildlyinteresting' if exists, else first one
-        const defaultCat = categoryOptions.value.find(c => c.id === 'mildlyinteresting') || categoryOptions.value[0]
-        if (defaultCat) {
-            categoryId.value = String(defaultCat.id)
-        }
-    }
-})
-
-// Mutation
-const { mutate: createPost, isPending: isSubmitting } = useCreatePostMutation()
-
-const md = new MarkdownIt({
-    html: false,
-    breaks: true,
-    linkify: true,
-})
-
-// ... (existing computed and methods) ...
-const parsedContent = computed(() => {
-    // Replace /media/ with full URL for preview
-    const rendered = md.render(content.value)
-    // For blob URLs, they work natively in browser, so no replacement needed for them.
-    // However, if we have existing images from server?
-    // The user said "preview should show images saved in website memory".
-    // That means the blob URLs should just work.
-
-    // But we also need to support S3 display for existing posts if we ever edit them here?
-    // Or just unrelated.
-    // The previous code replaced /media/. Let's keep S3 replacement just in case.
-    const s3BaseUrl = import.meta.env.VITE_S3_BASE_URL || 'https://njjc-media.s3.ap-northeast-2.amazonaws.com'
-
-    const updated = rendered.replace(/src="\/media\/([^"]+)"/g, `src="${s3BaseUrl}/$1"`)
-    return updated
-})
-
-
-const insertContent = async (text: string) => {
-    if (!textareaRef.value) {
-        content.value += text
-        return
-    }
-
-    const start = textareaRef.value.selectionStart
-    const end = textareaRef.value.selectionEnd
-
-    // Insert text at cursor position
-    content.value = content.value.substring(0, start) + text + content.value.substring(end)
-
-    // Restore focus and cursor position after DOM update
-    await nextTick()
-    if (textareaRef.value) {
-        textareaRef.value.focus()
-        const newCursorPos = start + text.length
-        textareaRef.value.setSelectionRange(newCursorPos, newCursorPos)
-    }
-}
-
-const previewAndInsertImage = async (file: File) => {
-    try {
-        // Create local preview URL
-        const blobUrl = URL.createObjectURL(file)
-        pendingImages.value.set(blobUrl, file)
-
-        // Insert markdown image syntax with blob URL
-        const imageMarkdown = `![](${blobUrl})\n`
-        await insertContent(imageMarkdown)
-
-    } catch (error) {
-        console.error('Image processing failed:', error)
-        alert('Failed to process image')
-    }
-}
-
-
-const handleImageUpload = async (event: Event) => {
-    const files = (event.target as HTMLInputElement).files
-    if (!files || files.length === 0) return
-
-    for (let i = 0; i < files.length; i++) {
-        if (files[i]) {
-            await previewAndInsertImage(files[i]!)
-        }
-    }
-
-    if (fileInput.value) fileInput.value.value = ''
-}
-
-const handlePaste = async (event: ClipboardEvent) => {
-    const items = event.clipboardData?.items
-    if (!items) return
-
-    for (const item of items) {
-        if (item.type.indexOf('image/') !== -1) {
-            const file = item.getAsFile()
-            if (file) {
-                // Don't prevent default immediately if we want to allow text paste too?
-                // But usually if image is mixed, we might just want the image.
-                // Let's prevent default to handle custom insertion.
-                event.preventDefault()
-                await previewAndInsertImage(file)
-            }
-        }
-    }
-}
-
-const triggerFileUpload = () => {
-    fileInput.value?.click()
-}
 
 const handleBack = () => {
     router.back()
 }
-
-const handleComplete = async () => {
-    if (!title.value.trim() || !content.value.trim()) {
-        alert('제목과 내용을 모두 입력해주세요.')
-        return
-    }
-
-    if (!categoryId.value) {
-        alert('카테고리를 선택해주세요.')
-        return
-    }
-
-    try {
-        isUploading.value = true
-        let finalContent = content.value
-
-        // Process pending images
-        // Find all blob URLs in the content
-        // We iterate through our map to find which ones are actually used
-        // (User might have deleted some from the text area)
-
-        // filesToUpload array to preserve order for bulk upload
-        const filesToUpload: File[] = []
-        const blobUrlsToReplace: string[] = []
-
-        for (const [blobUrl, file] of pendingImages.value.entries()) {
-            if (finalContent.includes(blobUrl)) {
-                filesToUpload.push(file)
-                blobUrlsToReplace.push(blobUrl)
-            } else {
-                // unused blob, revoke it
-                URL.revokeObjectURL(blobUrl)
-            }
-        }
-
-        if (filesToUpload.length > 0) {
-            const responseList = await uploadImage(filesToUpload)
-
-            // Replace blobs with returned IDs
-            // Assuming responseList order matches filesToUpload order
-            responseList.forEach((response, index) => {
-                const blobUrl = blobUrlsToReplace[index]
-                // response is { id: string, url: string }
-                const replacement = `/media/${response.id}.png`
-                if (blobUrl) {
-                    finalContent = finalContent.split(blobUrl).join(replacement)
-                    URL.revokeObjectURL(blobUrl)
-                }
-            })
-        }
-
-        // Clear pending images map
-        pendingImages.value.clear()
-
-        createPost(
-            {
-                title: title.value,
-                body: finalContent,
-                category: categoryId.value
-            },
-            {
-                onSuccess: () => {
-                    alert('게시글이 작성되었습니다.')
-                    router.push('/')
-                },
-                onError: (error) => {
-                    console.error('Failed to create post:', error)
-                    alert('게시글 작성에 실패했습니다.')
-                }
-            }
-        )
-    } catch (e) {
-        console.error('Upload error', e)
-        alert('이미지 업로드 중 오류가 발생했습니다.')
-    } finally {
-        isUploading.value = false
-    }
-}
-
 </script>
 
 <template>
@@ -240,7 +57,7 @@ const handleComplete = async () => {
                     size="small"
                     variant="primary"
                     class="complete-btn"
-                    @click="handleComplete"
+                    @click="submitPost"
                     :disabled="isSubmitting"
                 >
                     {{ isSubmitting ? '작성 중...' : '완료' }}
