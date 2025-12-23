@@ -4,7 +4,10 @@ import { ProfileTabs } from '@/widgets/profile-info/ui'
 import { FeedCard } from '@/entities/feed/ui'
 import { useInfiniteMyPostListQuery, useInfiniteLikedPostListQuery } from '@/entities/post'
 
+import { useAuthStore } from '@/features/auth/model/store'
+
 const activeTab = ref<'likes' | 'posts'>('likes')
+const authStore = useAuthStore()
 
 // Queries
 const myPostsQuery = useInfiniteMyPostListQuery({ page_size: 10 })
@@ -60,8 +63,11 @@ onUnmounted(() => {
 <template>
     <div class="profile-page">
         <header class="profile-header">
-            <div class="profile-image-container">
-                <img src="/default-profile.svg" alt="Profile" class="profile-image" />
+            <div class="profile-info">
+                <div class="profile-image-container">
+                    <img src="/default-profile.svg" alt="Profile" class="profile-image" />
+                </div>
+                <h2 class="username">{{ authStore.user?.username }}</h2>
             </div>
         </header>
 
@@ -112,6 +118,20 @@ onUnmounted(() => {
     display: flex;
     justify-content: center;
     padding: 40px 0;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.username {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-gray-900);
+    margin: 0;
 }
 
 .profile-image-container {
