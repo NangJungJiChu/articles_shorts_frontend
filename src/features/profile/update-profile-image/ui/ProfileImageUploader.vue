@@ -30,22 +30,15 @@ const handleFileChange = (event: Event) => {
     const file = target.files[0]
     selectedImage.value = URL.createObjectURL(file)
     isModalOpen.value = true
-    // Reset input so same file can be selected again
     target.value = ''
   }
 }
 
 const { mutate: uploadImage, isPending: isUploading } = useMutation({
   mutationFn: uploadProfileImage,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSuccess: async () => {
-    // 1. Invalidate 'user' query (as requested)
     await queryClient.invalidateQueries({ queryKey: ['user'] })
-
-    // 2. Fetch fresh user data to update Pinia store (which drives the UI)
     await authStore.fetchUser()
-
-    // 3. Update timestamp to force image refresh
     timestamp.value = Date.now()
 
     closeModal()

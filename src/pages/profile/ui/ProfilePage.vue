@@ -6,9 +6,17 @@ import { FeedCard } from '@/entities/feed/ui'
 import { useInfiniteMyPostListQuery, useInfiniteLikedPostListQuery } from '@/entities/post'
 
 import { useAuthStore } from '@/features/auth/model/store'
+import { Button } from '@/shared/ui/button'
+import { useRouter } from 'vue-router'
 
 const activeTab = ref<'likes' | 'posts'>('likes')
 const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+    authStore.logout()
+    router.push('/login')
+}
 
 // Queries
 const myPostsQuery = useInfiniteMyPostListQuery({ page_size: 10 })
@@ -69,6 +77,9 @@ onUnmounted(() => {
                     :current-image-url="authStore.user?.profile_img"
                 />
                 <h2 class="username">{{ authStore.user?.username }}</h2>
+                <Button variant="secondary" size="small" @click="handleLogout" class="logout-btn">
+                    로그아웃
+                </Button>
             </div>
         </header>
 
