@@ -115,10 +115,12 @@ watch(isOpen, (newVal) => {
     justify-content: space-between;
     padding: 12px 16px;
     background-color: var(--color-white);
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-gray-300);
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-medium-size);
+    /* 14px */
     transition: all 0.2s;
     text-align: left;
 }
@@ -129,7 +131,7 @@ watch(isOpen, (newVal) => {
 }
 
 .combobox-value {
-    color: #333;
+    color: var(--color-gray-900);
     font-weight: 500;
 }
 
@@ -152,7 +154,7 @@ watch(isOpen, (newVal) => {
     left: 0;
     width: 100%;
     background: var(--color-white);
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-gray-300);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 50;
@@ -161,7 +163,7 @@ watch(isOpen, (newVal) => {
 
 .search-container {
     padding: 8px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-gray-300);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -176,8 +178,10 @@ watch(isOpen, (newVal) => {
     width: 100%;
     border: none;
     outline: none;
-    font-size: 14px;
-    color: #333;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-medium-size);
+    color: var(--color-gray-900);
+    background: transparent;
 }
 
 .options-list {
@@ -190,8 +194,9 @@ watch(isOpen, (newVal) => {
 
 .option-item {
     padding: 10px 16px;
-    font-size: 14px;
-    color: #333;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-medium-size);
+    color: var(--color-gray-900);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
@@ -217,6 +222,7 @@ watch(isOpen, (newVal) => {
     padding: 16px;
     text-align: center;
     color: var(--color-gray-500);
-    font-size: 14px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-medium-size);
 }
 </style>

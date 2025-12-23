@@ -46,7 +46,7 @@ const classes = computed(() => {
 
 /* Sizes & Typography */
 .btn-small {
-  height: 48px;
+  height: 44px;
   /* label-large */
   font-family: var(--font-family-base);
   font-size: var(--font-label-large-size);
@@ -56,7 +56,7 @@ const classes = computed(() => {
 }
 
 .btn-medium {
-  height: 56px;
+  height: 52px;
   /* body-medium + emphasize (font-weight: 500) */
   font-family: var(--font-family-base);
   font-size: var(--font-body-medium-size);
@@ -66,7 +66,7 @@ const classes = computed(() => {
 }
 
 .btn-large {
-  height: 64px;
+  height: 60px;
   /* body-large + emphasize (font-weight: 500) */
   font-family: var(--font-family-base);
   font-size: var(--font-body-large-size);
@@ -86,16 +86,20 @@ const classes = computed(() => {
 
 /* Secondary Variant */
 .btn-secondary {
-  background-color: var(--color-blue-300);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-blue-600);
+  color: var(--color-blue-600);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--color-blue-200);
+  background-color: var(--color-gray-200);
 }
 
 /* Disabled State */
 .btn-disabled {
-  background-color: var(--color-gray-400);
+  background-color: var(--color-gray-100);
+  border-color: var(--color-gray-400);
+  color: var(--color-gray-400);
   cursor: not-allowed;
 }
 </style>

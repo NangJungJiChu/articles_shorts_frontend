@@ -5,6 +5,7 @@ import MarkdownIt from 'markdown-it'
 
 import { Icon } from '@/shared/ui/icon'
 import { Combobox } from '@/shared/ui/combobox'
+import { Button } from '@/shared/ui/button'
 import { uploadImage } from '@/features/upload/api/uploadImage'
 import { useCreatePostMutation, useCategoryListQuery } from '@/entities/post'
 
@@ -234,9 +235,17 @@ const handleComplete = async () => {
                 <Icon name="arrow_back" />
             </button>
             <h1 class="page-title">새 게시글</h1>
-            <button class="complete-btn" @click="handleComplete" :disabled="isSubmitting">
-                {{ isSubmitting ? '작성 중...' : '완료' }}
-            </button>
+            <div class="header-actions">
+                <Button
+                    size="small"
+                    variant="primary"
+                    class="complete-btn"
+                    @click="handleComplete"
+                    :disabled="isSubmitting"
+                >
+                    {{ isSubmitting ? '작성 중...' : '완료' }}
+                </Button>
+            </div>
         </header>
 
         <!-- Tabs -->
@@ -293,7 +302,7 @@ const handleComplete = async () => {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-gray-300);
 }
 
 .nav-btn {
@@ -301,25 +310,26 @@ const handleComplete = async () => {
     border: none;
     padding: 4px;
     cursor: pointer;
+    color: var(--color-gray-900);
 }
 
 .page-title {
-    font-size: 18px;
-    font-weight: 600;
+    font-family: var(--font-family-base);
+    font-size: var(--font-title-large-size);
+    line-height: var(--font-title-large-line-height);
+    font-weight: 500;
+    color: var(--color-gray-900);
 }
 
-.complete-btn {
-    background: none;
-    border: none;
-    color: var(--color-blue-600);
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
+.header-actions {
+    width: 80px; /* Constrain button width */
 }
+
+/* Override button styles if needed, but try to rely on component defaults */
 
 .tabs {
     display: flex;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-gray-300);
 }
 
 .tab-btn {
@@ -327,7 +337,9 @@ const handleComplete = async () => {
     padding: 12px;
     background: none;
     border: none;
-    font-size: 14px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-label-large-size);
+    line-height: var(--font-label-large-line-height);
     font-weight: 500;
     color: var(--color-gray-600);
     cursor: pointer;
@@ -352,12 +364,19 @@ const handleComplete = async () => {
 .title-input {
     width: 100%;
     padding: 12px 0;
-    font-size: 20px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-headline-small-size);
+    line-height: var(--font-headline-small-line-height);
     font-weight: 600;
     border: none;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-gray-300);
     outline: none;
     margin-bottom: 16px;
+    color: var(--color-gray-900);
+}
+
+.title-input::placeholder {
+    color: var(--color-gray-400);
 }
 
 .editor-container {
@@ -373,10 +392,16 @@ const handleComplete = async () => {
     resize: none;
     border: none;
     outline: none;
-    font-size: 16px;
-    line-height: 1.5;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-large-size);
+    line-height: var(--font-body-large-line-height);
+    color: var(--color-gray-900);
     padding-bottom: 60px;
     /* Space for upload button */
+}
+
+.content-editor::placeholder {
+    color: var(--color-gray-400);
 }
 
 .upload-btn {
@@ -386,12 +411,21 @@ const handleComplete = async () => {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 8px 16px;
     background-color: var(--color-gray-100);
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--color-gray-300);
     border-radius: 20px;
     cursor: pointer;
-    font-size: 14px;
+
+    font-family: var(--font-family-base);
+    font-size: var(--font-label-medium-size);
+    font-weight: 500;
+    color: var(--color-gray-700);
+    transition: background-color 0.2s;
+}
+
+.upload-btn:hover {
+    background-color: var(--color-gray-200);
 }
 
 .hidden-input {
@@ -399,16 +433,20 @@ const handleComplete = async () => {
 }
 
 .preview-title {
-    font-size: 24px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-headline-large-size);
     font-weight: 700;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-gray-300);
+    color: var(--color-gray-900);
 }
 
 .markdown-body {
-    font-size: 16px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-large-size);
     line-height: 1.6;
+    color: var(--color-gray-900);
 }
 
 /* Basic Markdown Styles */
@@ -424,6 +462,7 @@ const handleComplete = async () => {
     margin-top: 24px;
     margin-bottom: 16px;
     font-weight: 600;
+    color: var(--color-gray-900);
 }
 
 :deep(.markdown-body p) {

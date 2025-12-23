@@ -2,6 +2,7 @@
 import { ref, toRef } from 'vue'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
+import { Button } from '@/shared/ui/button'
 import { CommentList } from '@/features/comment'
 import { useMarkdown } from '@/entities/post/lib/useMarkdown'
 import { usePostInteractions } from '@/entities/post/lib/usePostInteractions'
@@ -161,14 +162,16 @@ const formatCount = (count: number | string) => {
                     placeholder="신고 사유를 입력해주세요..."
                 ></textarea>
                 <div class="report-actions">
-                    <button class="cancel-btn" @click="handleCloseReasonModal">취소</button>
-                    <button
-                        class="submit-btn"
+                    <Button variant="secondary" @click="handleCloseReasonModal">
+                        취소
+                    </Button>
+                    <Button
+                        variant="primary"
                         :disabled="!reportReason.trim()"
                         @click="handleReport(reportReason); handleCloseReasonModal()"
                     >
                         신고
-                    </button>
+                    </Button>
                 </div>
             </div>
         </Modal>
@@ -217,7 +220,7 @@ const formatCount = (count: number | string) => {
     font-family: var(--font-family-base);
     font-size: 24px;
     font-weight: 700;
-    color: var(--color-black, #000);
+    color: var(--color-black);
     margin: 0;
 }
 
@@ -225,7 +228,7 @@ const formatCount = (count: number | string) => {
     font-family: var(--font-family-base);
     font-size: 14px;
     line-height: 1.5;
-    color: var(--color-gray-800, #333);
+    color: var(--color-gray-800);
     padding-bottom: 40px;
 }
 
@@ -235,12 +238,12 @@ const formatCount = (count: number | string) => {
     height: auto;
     border-radius: 8px;
     margin-top: 8px;
-    background-color: var(--color-gray-100, #f0f0f0);
+    background-color: var(--color-gray-100);
 }
 
 :deep(p) {
     margin: 0 0 8px 0;
-    line-height: var(--font-body-large-line-height, 1.5);
+    line-height: var(--font-body-large-line-height);
 }
 
 :deep(p:last-child) {
@@ -276,7 +279,7 @@ const formatCount = (count: number | string) => {
 }
 
 .action-btn .icon.is-liked {
-    color: var(--color-red-500, #ff4d4f);
+    color: var(--color-danger); /* token or #ff4d4f */
 }
 
 .count {
@@ -301,11 +304,11 @@ const formatCount = (count: number | string) => {
 }
 
 .menu-item:hover {
-    background-color: var(--color-gray-100, #f5f5f5);
+    background-color: var(--color-gray-100);
 }
 
 .menu-item.delete-btn {
-    color: var(--color-red-500, #ff4d4f);
+    color: var(--color-danger);
 }
 
 /* Report Reason Styling */
@@ -320,41 +323,23 @@ const formatCount = (count: number | string) => {
     width: 100%;
     height: 120px;
     padding: 12px;
-    border: 1px solid var(--color-gray-200);
+    border: 1px solid var(--color-gray-300);
     border-radius: 8px;
     resize: none;
-    font-size: 14px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-body-medium-size);
     box-sizing: border-box;
+    color: var(--color-gray-900);
+}
+
+.reason-input::placeholder {
+    color: var(--color-gray-500);
 }
 
 .report-actions {
-    display: flex;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
-}
-
-.cancel-btn, .submit-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-}
-
-.cancel-btn {
-    background: var(--color-gray-100);
-    color: var(--color-gray-700);
-}
-
-.submit-btn {
-    background: var(--color-red-500);
-    color: white;
-}
-
-.submit-btn:disabled {
-    background: var(--color-gray-300);
-    cursor: not-allowed;
 }
 
 /* Overlays */
