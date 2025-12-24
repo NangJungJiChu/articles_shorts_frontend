@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import { ref, onUnmounted, computed, watchEffect } from 'vue'
+import { ref, onUnmounted, onMounted, computed, watchEffect } from 'vue'
 import { FeedCard } from '@/entities/feed/ui'
-import { useInfiniteRecommendedPostListQuery } from '@/entities/post'
+import { useInfiniteRecommendedPostListQuery, postKeys } from '@/entities/post'
+import { useQueryClient } from '@tanstack/vue-query'
+
+const queryClient = useQueryClient()
+
+const refreshFeed = async () => {
+    await queryClient.invalidateQueries({ queryKey: postKeys.recommended() })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteRecommendedPostListQuery()
@@ -15,6 +23,25 @@ const posts = computed(() => {
 // IntersectionObserver for infinite scroll
 const loadMoreTrigger = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
+
+// Scroll Handling for Sticky Header
+const isHeaderVisible = ref(true)
+const lastScrollY = ref(0)
+
+const handleScroll = () => {
+    const currentScrollY = window.scrollY
+
+    // Determine scroll direction and update visibility
+    if (currentScrollY > lastScrollY.value && currentScrollY > 50) {
+        // Scrolling DOWN and not at the very top
+        isHeaderVisible.value = false
+    } else {
+        // Scrolling UP
+        isHeaderVisible.value = true
+    }
+
+    lastScrollY.value = currentScrollY
+}
 
 // Use watchEffect to observe when ref becomes available
 watchEffect(() => {
@@ -38,17 +65,24 @@ watchEffect(() => {
     }
 })
 
+
+
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
 onUnmounted(() => {
     if (observer) {
         observer.disconnect()
     }
+    window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
 <template>
     <div class="home-page">
-        <header class="home-header">
-            <img src="/logo.svg" alt="Logo" class="logo" />
+        <header class="home-header" :class="{ 'hidden': !isHeaderVisible }">
+            <img src="/logo.svg" alt="Logo" class="logo" @click="refreshFeed" />
         </header>
 
         <main class="feed-list">
@@ -95,6 +129,16 @@ onUnmounted(() => {
     justify-content: center;
     padding: 16px 0;
     background-color: var(--color-white);
+
+    /* Sticky Snap Logic */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: transform 0.3s ease-in-out;
+}
+
+.home-header.hidden {
+    transform: translateY(-100%);
 }
 
 .logo {

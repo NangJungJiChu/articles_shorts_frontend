@@ -1,13 +1,34 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { Icon } from '@/shared/ui/icon'
+import { useQueryClient } from '@tanstack/vue-query'
+import { postKeys } from '@/entities/post'
+
+const route = useRoute()
+const queryClient = useQueryClient()
+
+const handleHomeClick = async (navigate: () => void) => {
+    if (route.name === 'home') {
+        await queryClient.invalidateQueries({ queryKey: postKeys.recommended() })
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    navigate()
+}
+
+const handleShortsClick = async (navigate: () => void) => {
+    if (route.name === 'shorts') {
+        await queryClient.invalidateQueries({ queryKey: postKeys.recommended() })
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    navigate()
+}
 </script>
 
 <template>
     <nav class="bottom-tab-bar">
         <!-- Home Tab -->
         <RouterLink :to="{ name: 'home' }" custom v-slot="{ navigate, isActive }">
-            <button class="tab-item" :class="{ 'is-active': isActive }" @click="navigate">
+            <button class="tab-item" :class="{ 'is-active': isActive }" @click="handleHomeClick(navigate)">
                 <Icon name="home" :type="isActive ? 'filled' : 'outlined'" />
                 <span class="tab-label">Home</span>
             </button>
@@ -15,7 +36,7 @@ import { Icon } from '@/shared/ui/icon'
 
         <!-- Shorts Tab -->
         <RouterLink :to="{ name: 'shorts' }" custom v-slot="{ navigate, isActive }">
-            <button class="tab-item" :class="{ 'is-active': isActive }" @click="navigate">
+            <button class="tab-item" :class="{ 'is-active': isActive }" @click="handleShortsClick(navigate)">
                 <Icon name="article" :type="isActive ? 'filled' : 'outlined'" />
                 <span class="tab-label">Shorts</span>
             </button>
