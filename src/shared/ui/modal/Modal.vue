@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { watch, onUnmounted } from 'vue'
 import { Icon } from '@/shared/ui/icon'
 
 interface Props {
@@ -15,10 +15,16 @@ const handleClose = () => {
 }
 
 // Prevent background scrolling when modal is open
-onMounted(() => {
-    // Watch logic could be added here if dynamic body lock is needed,
-    // but for simplicity we assume simplistic usage or add watch in parent/here if strictly needed.
-    // For now, let's keep it simple CSS-based overlay.
+watch(() => props.isOpen, (isOpen) => {
+    if (isOpen) {
+        document.body.style.overflow = 'hidden'
+    } else {
+        document.body.style.overflow = ''
+    }
+}, { immediate: true })
+
+onUnmounted(() => {
+    document.body.style.overflow = ''
 })
 
 </script>
@@ -65,7 +71,6 @@ onMounted(() => {
     width: 90%;
     max-width: 400px;
     max-height: 90vh;
-    overflow-y: auto;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
@@ -93,7 +98,7 @@ onMounted(() => {
 }
 
 .modal-content {
-    padding: 16px;
+    overflow-y: auto;
 }
 
 /* Transitions */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useCommentListQuery, useCreateCommentMutation } from '@/features/comment'
 import { Icon } from '@/shared/ui/icon'
 
@@ -11,6 +11,15 @@ const newComment = ref('')
 const { data: commentData, isLoading } = useCommentListQuery(props.postId)
 const { mutate: addComment, isPending: isSubmitting } = useCreateCommentMutation()
 
+const comments = computed(() => {
+    const list = commentData.value?.comments ? [...commentData.value.comments] : []
+    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+})
+
+const emit = defineEmits<{
+    (e: 'comment-added'): void
+}>()
+
 const handleSubmit = () => {
     if (!newComment.value.trim()) return
 
@@ -19,6 +28,7 @@ const handleSubmit = () => {
         {
             onSuccess: () => {
                 newComment.value = ''
+                emit('comment-added')
             }
         }
     )
@@ -32,13 +42,12 @@ const formatDate = (dateString: string) => {
 <template>
     <div class="comment-list-container">
         <!-- Input Area -->
-        <div class="comment-input-area">
-            <input v-model="newComment" type="text" placeholder="댓글을 입력하세요..." class="comment-input"
-                @keyup.enter="handleSubmit" />
-            <button class="send-btn" @click="handleSubmit" :disabled="!newComment.trim() || isSubmitting">
+        <form class="comment-input-area" @submit.prevent="handleSubmit">
+            <input v-model="newComment" type="text" placeholder="댓글을 입력하세요..." class="comment-input" :disabled="isSubmitting" />
+            <button class="send-btn" :disabled="!newComment.trim() || isSubmitting">
                 <Icon name="send" />
             </button>
-        </div>
+        </form>
 
         <!-- List Area -->
         <div class="comments-scroll-area">
@@ -46,12 +55,12 @@ const formatDate = (dateString: string) => {
                 Loading...
             </div>
 
-            <div v-else-if="commentData?.comments.length === 0" class="empty-state">
+            <div v-else-if="comments.length === 0" class="empty-state">
                 첫 번째 댓글을 남겨보세요!
             </div>
 
             <ul v-else class="comment-items">
-                <li v-for="comment in commentData?.comments" :key="comment.id" class="comment-item">
+                <li v-for="comment in comments" :key="comment.id" class="comment-item">
                     <div class="comment-header">
                         <span class="author">{{ comment.author_username }}</span>
                         <span class="date">{{ formatDate(comment.created_at) }}</span>
@@ -68,15 +77,19 @@ const formatDate = (dateString: string) => {
     display: flex;
     flex-direction: column;
     height: 100%;
+    padding: 0 16px;
 }
 
 .comment-input-area {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 0;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 16px;
+  background-color: var(--color-white, #fff);
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 16px;
 }
 
 .comment-input {

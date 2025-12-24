@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, toRef } from 'vue'
+import { ref, toRef, watch } from 'vue'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
 import { Button } from '@/shared/ui/button'
@@ -69,6 +69,17 @@ const { renderedContent } = useMarkdown(toRef(props, 'content'), contentRef, che
 // 4. View Tracking
 useViewTracking(props.postId, cardRef)
 
+// 5. Local Comment Count (Optimistic Update)
+const localCommentsCount = ref(Number(props.commentsCount))
+
+watch(() => props.commentsCount, (newCount) => {
+    localCommentsCount.value = Number(newCount)
+})
+
+const handleCommentAdded = () => {
+    localCommentsCount.value++
+}
+
 // --- Helper ---
 const formatCount = (count: number | string) => {
     if (typeof count === 'string') return count
@@ -109,7 +120,7 @@ const formatCount = (count: number | string) => {
             <!-- Comment Button -->
             <button class="action-btn" @click.stop="isCommentModalOpen = true">
                 <Icon name="chat_bubble" />
-                <span class="count">{{ formatCount(commentsCount) }}</span>
+                <span class="count">{{ formatCount(localCommentsCount) }}</span>
             </button>
 
             <!-- More Options Button -->
@@ -125,7 +136,7 @@ const formatCount = (count: number | string) => {
             title="댓글"
             @close="isCommentModalOpen = false"
         >
-            <CommentList :postId="postId" />
+            <CommentList :postId="postId" @comment-added="handleCommentAdded" />
         </Modal>
 
         <Modal
