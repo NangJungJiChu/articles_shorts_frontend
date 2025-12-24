@@ -107,7 +107,7 @@ onUnmounted(() => {
             <div v-else class="post-list">
                 <FeedCard v-for="post in posts" :key="post.id" :title="post.title" :content="post.content"
                     :likes-count="post.like_count" :comments-count="post.comments.length" :is-liked="post.is_liked"
-                    :post-id="post.id" :author="post.author_username" />
+                    :post-id="post.id" :author="post.author_username" :disable-view-tracking="true" />
 
                 <!-- Sentinel -->
                 <div ref="loadMoreTrigger" class="load-more-trigger">

@@ -17,6 +17,7 @@ interface Props {
     commentsCount: number
     isLiked: boolean
     postId: number
+    disableViewTracking?: boolean
 }
 
 const props = defineProps<Props>()
@@ -56,7 +57,7 @@ const handleCloseReasonModal = () => {
 const { renderedContent } = useMarkdown(toRef(props, 'content'), contentRef)
 
 // 3. View Tracking
-useViewTracking(props.postId, cardRef)
+useViewTracking(props.postId, cardRef, () => !props.disableViewTracking)
 
 // 4. Local Comment Count (Optimistic Update)
 const localCommentsCount = ref(props.commentsCount)
