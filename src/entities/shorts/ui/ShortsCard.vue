@@ -136,22 +136,22 @@ const formatCount = (count: number | string) => {
             <!-- Like Button -->
             <button class="action-btn" @click="handleLike">
                 <Icon
+                    class="icon"
                     name="favorite"
                     :type="localIsLiked ? 'filled' : 'outlined'"
-                    :class="{ 'is-liked': localIsLiked }"
                 />
                 <span class="count">{{ formatCount(localLikesCount) }}</span>
             </button>
 
             <!-- Comment Button -->
             <button class="action-btn" @click.stop="isCommentModalOpen = true">
-                <Icon name="chat_bubble" />
+                <Icon name="chat_bubble" class="icon" />
                 <span class="count">{{ formatCount(localCommentsCount) }}</span>
             </button>
 
             <!-- More Options Button -->
             <button class="action-btn more-btn" @click.stop="isReportModalOpen = true">
-                <Icon name="more_vert" />
+                <Icon name="more_vert" class="icon" />
             </button>
         </div>
 
@@ -308,15 +308,17 @@ const formatCount = (count: number | string) => {
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--color-gray-900);
+    color: var(--color-white);
+    transition: transform 0.2s;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.action-btn:active {
+    transform: scale(0.9);
 }
 
 .action-btn .icon {
     font-size: 32px;
-}
-
-.action-btn .icon.is-liked {
-    color: var(--color-danger); /* token or #ff4d4f */
 }
 
 .count {
