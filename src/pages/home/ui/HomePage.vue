@@ -24,7 +24,6 @@ const handleRemove = (id: number) => {
   hiddenPostIds.value.add(id)
 }
 
-// Flatten all pages into single posts array
 const posts = computed(() => {
   if (!data.value) return []
   return data.value.pages
