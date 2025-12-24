@@ -27,10 +27,20 @@ const currentQuery = computed(() => {
     return activeTab.value === 'posts' ? myPostsQuery : likedPostsQuery
 })
 
+
+
+const hiddenPostIds = ref(new Set<number>())
+
+const handleRemove = (id: number) => {
+    hiddenPostIds.value.add(id)
+}
+
 const posts = computed(() => {
     const data = currentQuery.value.data.value
     if (!data) return []
-    return data.pages.flatMap((page) => page.results)
+    return data.pages
+        .flatMap((page) => page.results)
+        .filter((post) => !hiddenPostIds.value.has(post.id))
 })
 
 const isLoading = computed(() => currentQuery.value.isLoading.value)
@@ -107,7 +117,8 @@ onUnmounted(() => {
             <div v-else class="post-list">
                 <FeedCard v-for="post in posts" :key="post.id" :title="post.title" :content="post.content"
                     :likes-count="post.like_count" :comments-count="post.comments.length" :is-liked="post.is_liked"
-                    :post-id="post.id" :author="post.author_username" :disable-view-tracking="true" />
+                    :post-id="post.id" :author="post.author_username" :disable-view-tracking="true"
+                    @remove="handleRemove" />
 
                 <!-- Sentinel -->
                 <div ref="loadMoreTrigger" class="load-more-trigger">

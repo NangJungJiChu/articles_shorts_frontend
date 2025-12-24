@@ -25,6 +25,10 @@ const props = withDefaults(defineProps<Props>(), {
     isLiked: false,
 })
 
+const emit = defineEmits<{
+    (e: 'remove', id: number): void
+}>()
+
 // Refs for composables
 const cardRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
@@ -41,6 +45,28 @@ const {
     handleNotInterested,
     handleDelete
 } = usePostInteractions(props)
+
+const onReport = async () => {
+    const success = await handleReport(reportReason.value)
+    handleCloseReasonModal()
+    if (success) {
+        emit('remove', props.postId)
+    }
+}
+
+const onNotInterested = async () => {
+    const success = await handleNotInterested()
+    if (success) {
+        emit('remove', props.postId)
+    }
+}
+
+const onDelete = async () => {
+    const success = await handleDelete()
+    if (success) {
+        emit('remove', props.postId)
+    }
+}
 
 const isReasonModalOpen = ref(false)
 const reportReason = ref('')
@@ -145,7 +171,7 @@ const formatCount = (count: number | string) => {
             @close="isReportModalOpen = false"
         >
             <div class="menu-list">
-                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                <button v-if="isAuthor" class="menu-item delete-btn" @click="onDelete">
                     <Icon name="delete" />
                     <span>삭제하기</span>
                 </button>
@@ -153,7 +179,7 @@ const formatCount = (count: number | string) => {
                     <Icon name="report" />
                     <span>신고/차단하기</span>
                 </button>
-                <button class="menu-item" @click="handleNotInterested">
+                <button class="menu-item" @click="onNotInterested">
                     <Icon name="visibility_off" />
                     <span>관심없음</span>
                 </button>
@@ -179,7 +205,7 @@ const formatCount = (count: number | string) => {
                     <Button
                         variant="primary"
                         :disabled="!reportReason.trim()"
-                        @click="handleReport(reportReason); handleCloseReasonModal()"
+                        @click="onReport"
                     >
                         신고
                     </Button>
@@ -189,7 +215,7 @@ const formatCount = (count: number | string) => {
 
         <!-- 4. Overlays -->
         <div v-if="isOverflowing && !isExpanded" class="expand-overlay">
-            <span class="expand-text">Tap to expand</span>
+            <span class="expand-text body-large-emphasize">Tap to expand</span>
         </div>
     </article>
 </template>
@@ -360,18 +386,16 @@ const formatCount = (count: number | string) => {
     left: 0;
     width: 100%;
     height: 120px;
-    background: linear-gradient(to bottom, transparent 0%, var(--color-white) 100%);
+    background: linear-gradient(to bottom, transparent 0%, var(--color-gray-200) 100%);
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding-bottom: 24px;
+    padding-bottom: 58px;
     pointer-events: none;
 }
 
 .expand-text {
-    font-family: var(--font-family-base);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-gray-900);
+    color: var(--color-white);
+    text-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
 }
 </style>

@@ -14,10 +14,20 @@ const refreshFeed = async () => {
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteRecommendedPostListQuery()
 
+
+
+const hiddenPostIds = ref(new Set<number>())
+
+const handleRemove = (id: number) => {
+    hiddenPostIds.value.add(id)
+}
+
 // Flatten all pages into single posts array
 const posts = computed(() => {
     if (!data.value) return []
-    return data.value.pages.flatMap((page) => page.results)
+    return data.value.pages
+        .flatMap((page) => page.results)
+        .filter((post) => !hiddenPostIds.value.has(post.id))
 })
 
 // IntersectionObserver for infinite scroll
@@ -101,7 +111,7 @@ onUnmounted(() => {
             <template v-else>
                 <FeedCard v-for="post in posts" :key="post.id" :title="post.title" :content="post.content"
                     :likesCount="post.like_count" :commentsCount="post.comments.length" :isLiked="post.is_liked"
-                    :postId="post.id" :author="post.author_username" />
+                    :postId="post.id" :author="post.author_username" @remove="handleRemove" />
 
                 <!-- Load More Trigger -->
                 <div ref="loadMoreTrigger" class="load-more-trigger">

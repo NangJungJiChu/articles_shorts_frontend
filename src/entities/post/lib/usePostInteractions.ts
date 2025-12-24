@@ -50,33 +50,37 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
     }
   }
 
-  const handleReport = async (reason: string) => {
-    if (!reason) return
+  const handleReport = async (reason: string): Promise<boolean> => {
+    if (!reason) return false
     try {
       await reportPost(props.postId, reason)
       alert('신고가 접수되었습니다.')
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       queryClient.invalidateQueries({ queryKey: ['shorts'] })
       isReportModalOpen.value = false
+      return true
     } catch (error) {
       console.error('Report failed:', error)
       alert('신고에 실패했습니다.')
+      return false
     }
   }
 
-  const handleNotInterested = async () => {
+  const handleNotInterested = async (): Promise<boolean> => {
     try {
       await interactWithPost(props.postId, 'NOT_INTERESTED')
       alert('관심없음으로 설정되었습니다.')
       isReportModalOpen.value = false
+      return true
     } catch (error) {
       console.error('Not interested action failed:', error)
       alert('설정에 실패했습니다.')
+      return false
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
+  const handleDelete = async (): Promise<boolean> => {
+    if (!confirm('정말 삭제하시겠습니까?')) return false
 
     try {
       await deletePost(props.postId)
@@ -91,9 +95,11 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
       })
 
       isReportModalOpen.value = false
+      return true
     } catch (error) {
       console.error('Delete failed:', error)
       alert('삭제에 실패했습니다.')
+      return false
     }
   }
 

@@ -8,10 +8,18 @@ import { useVirtualizer } from '@tanstack/vue-virtual'
 const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
     useInfiniteRecommendedPostListQuery()
 
+const hiddenPostIds = ref(new Set<number>())
+
+const handleRemove = (id: number) => {
+    hiddenPostIds.value.add(id)
+}
+
 // Flatten all pages into single shorts array
 const shorts = computed(() => {
     if (!data.value) return []
-    return data.value.pages.flatMap((page) => page.results)
+    return data.value.pages
+        .flatMap((page) => page.results)
+        .filter((post) => !hiddenPostIds.value.has(post.id))
 })
 
 // --- Virtual Scroll Setup ---
@@ -79,7 +87,7 @@ watch(virtualRows, (newRows) => {
                         :content="shorts[virtualRow.index]!.content" :likes-count="shorts[virtualRow.index]!.like_count"
                         :comments-count="shorts[virtualRow.index]!.comments.length"
                         :is-liked="shorts[virtualRow.index]!.is_liked" :post-id="shorts[virtualRow.index]!.id"
-                        :author="shorts[virtualRow.index]!.author_username" />
+                        :author="shorts[virtualRow.index]!.author_username" @remove="handleRemove" />
                 </div>
             </div>
         </div>

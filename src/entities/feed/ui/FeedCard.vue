@@ -20,6 +20,10 @@ interface Props {
     disableViewTracking?: boolean
 }
 
+const emit = defineEmits<{
+    (e: 'remove', id: number): void
+}>()
+
 const props = defineProps<Props>()
 
 // Refs for composables
@@ -39,6 +43,28 @@ const {
     handleNotInterested,
     handleDelete
 } = usePostInteractions(props, [postKeys.likedList({ page_size: 10 })])
+
+const onReport = async () => {
+    const success = await handleReport(reportReason.value)
+    handleCloseReasonModal()
+    if (success) {
+        emit('remove', props.postId)
+    }
+}
+
+const onNotInterested = async () => {
+    const success = await handleNotInterested()
+    if (success) {
+        emit('remove', props.postId)
+    }
+}
+
+const onDelete = async () => {
+    const success = await handleDelete()
+    if (success) {
+        emit('remove', props.postId)
+    }
+}
 
 const isReasonModalOpen = ref(false)
 const reportReason = ref('')
@@ -130,7 +156,7 @@ const formatCount = (count: number | string) => {
             @close="isReportModalOpen = false"
         >
             <div class="menu-list">
-                <button v-if="isAuthor" class="menu-item delete-btn" @click="handleDelete">
+                <button v-if="isAuthor" class="menu-item delete-btn" @click="onDelete">
                     <Icon name="delete" />
                     <span>삭제하기</span>
                 </button>
@@ -138,7 +164,7 @@ const formatCount = (count: number | string) => {
                     <Icon name="report" />
                     <span>신고/차단하기</span>
                 </button>
-                <button class="menu-item" @click="handleNotInterested">
+                <button class="menu-item" @click="onNotInterested">
                     <Icon name="visibility_off" />
                     <span>관심없음</span>
                 </button>
@@ -164,7 +190,7 @@ const formatCount = (count: number | string) => {
                     <Button
                         variant="primary"
                         :disabled="!reportReason.trim()"
-                        @click="handleReport(reportReason); handleCloseReasonModal()"
+                        @click="onReport"
                     >
                         신고
                     </Button>
