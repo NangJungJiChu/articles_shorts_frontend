@@ -144,7 +144,7 @@ const formatCount = (count: number | string) => {
     <!-- 3. Modals -->
     <!-- Comment Modal -->
     <Modal :isOpen="isCommentModalOpen" title="댓글" @close="isCommentModalOpen = false">
-      <CommentList :postId="postId" @comment-added="handleCommentAdded" />
+      <CommentList :postId="postId" @comment-added="handleCommentAdded" @comment-deleted="localCommentsCount--" />
     </Modal>
 
     <!-- More Options Modal -->

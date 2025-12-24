@@ -22,3 +22,7 @@ export async function createComment(postId: number, content: string): Promise<Co
   const { data } = await httpClient.post<Comment>(`/posts/${postId}/comments/`, { content })
   return data
 }
+
+export async function deleteComment(commentId: number): Promise<void> {
+  await httpClient.delete(`/posts/comments/${commentId}/`)
+}

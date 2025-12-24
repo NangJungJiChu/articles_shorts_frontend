@@ -1,186 +1,237 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useCommentListQuery, useCreateCommentMutation } from '@/features/comment'
+import { useCommentListQuery, useCreateCommentMutation, useDeleteCommentMutation } from '@/features/comment'
 import { Icon } from '@/shared/ui/icon'
+import { useAuthStore } from '@/features/auth/model/store'
 
 const props = defineProps<{
-    postId: number
+  postId: number
 }>()
 
 const newComment = ref('')
 const { data: commentData, isLoading } = useCommentListQuery(props.postId)
 const { mutate: addComment, isPending: isSubmitting } = useCreateCommentMutation()
+const { mutate: deleteComment } = useDeleteCommentMutation()
+const authStore = useAuthStore()
 
 const comments = computed(() => {
-    const list = commentData.value?.comments ? [...commentData.value.comments] : []
-    return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const list = commentData.value?.comments ? [...commentData.value.comments] : []
+  return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 })
 
 const emit = defineEmits<{
-    (e: 'comment-added'): void
+  (e: 'comment-added'): void
+  (e: 'comment-deleted'): void
 }>()
 
 const handleSubmit = () => {
-    if (!newComment.value.trim()) return
+  if (!newComment.value.trim()) return
 
-    addComment(
-        { postId: props.postId, content: newComment.value },
-        {
-            onSuccess: () => {
-                newComment.value = ''
-                emit('comment-added')
-            }
-        }
-    )
+  addComment(
+    { postId: props.postId, content: newComment.value },
+    {
+      onSuccess: () => {
+        newComment.value = ''
+        emit('comment-added')
+      }
+    }
+  )
+}
+
+const handleDelete = (commentId: number) => {
+  deleteComment(
+    { commentId },
+    {
+      onSuccess: () => {
+        emit('comment-deleted')
+      }
+    }
+  )
 }
 
 const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString()
+  return new Date(dateString).toLocaleDateString()
 }
+
+console.log(authStore.user?.username)
 </script>
 
 <template>
-    <div class="comment-list-container">
-        <!-- Input Area -->
-        <form class="comment-input-area" @submit.prevent="handleSubmit">
-            <input v-model="newComment" type="text" placeholder="댓글을 입력하세요..." class="comment-input"
-                :disabled="isSubmitting" />
-            <button class="send-btn" :disabled="!newComment.trim() || isSubmitting">
-                <Icon name="send" />
-            </button>
-        </form>
+  <div class="comment-list-container">
+    <!-- Input Area -->
+    <form class="comment-input-area" @submit.prevent="handleSubmit">
+      <input v-model="newComment" type="text" placeholder="댓글을 입력하세요..." class="comment-input"
+        :disabled="isSubmitting" />
+      <button class="send-btn" :disabled="!newComment.trim() || isSubmitting">
+        <Icon name="send" />
+      </button>
+    </form>
 
-        <!-- List Area -->
-        <div class="comments-scroll-area">
-            <div v-if="isLoading" class="loading-state">
-                Loading...
+    <!-- List Area -->
+    <div class="comments-scroll-area">
+      <div v-if="isLoading" class="loading-state">
+        Loading...
+      </div>
+
+      <div v-else-if="comments.length === 0" class="empty-state">
+        첫 번째 댓글을 남겨보세요!
+      </div>
+
+      <ul v-else class="comment-items">
+        <li v-for="comment in comments" :key="comment.id" class="comment-item">
+          <div class="comment-header">
+            <div class="author-info">
+              <img v-if="comment.author_profile_image" :src="comment.author_profile_image" alt="User"
+                class="author-avatar" />
+              <div v-else class="author-avatar placeholder"></div>
+              <span class="author">{{ comment.author_username }}</span>
             </div>
-
-            <div v-else-if="comments.length === 0" class="empty-state">
-                첫 번째 댓글을 남겨보세요!
+            <div class="header-right">
+              <span class="date">{{ formatDate(comment.created_at) }}</span>
+              <!-- Delete Button (Only for author) -->
+              <!-- TODO: Check strict equality of author ID. Assuming authStore.user.id exists -->
+              <button v-if="authStore.user?.username === comment.author_username" class="delete-btn"
+                @click="handleDelete(comment.id)">
+                <Icon name="delete" />
+              </button>
             </div>
-
-            <ul v-else class="comment-items">
-                <li v-for="comment in comments" :key="comment.id" class="comment-item">
-                    <div class="comment-header">
-                        <div class="author-info">
-                            <img v-if="comment.author_profile_image" :src="comment.author_profile_image" alt="User"
-                                class="author-avatar" />
-                            <div v-else class="author-avatar placeholder"></div>
-                            <span class="author">{{ comment.author_username }}</span>
-                        </div>
-                        <span class="date">{{ formatDate(comment.created_at) }}</span>
-                    </div>
-                    <p class="content">{{ comment.content }}</p>
-                </li>
-            </ul>
-        </div>
+          </div>
+          <p class="content">{{ comment.content }}</p>
+        </li>
+      </ul>
     </div>
+  </div>
 </template>
 
 <style scoped>
 .comment-list-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 16px;
 }
 
 .comment-input-area {
-    background-color: var(--color-white, #fff);
-    position: sticky;
-    top: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 0;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 16px;
+  background-color: var(--color-white, #fff);
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 16px;
 }
 
 .comment-input {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    font-size: 14px;
-    outline: none;
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
 }
 
 .comment-input:focus {
-    border-color: var(--color-blue-500);
+  border-color: var(--color-blue-500);
 }
 
 .send-btn {
-    background: none;
-    border: none;
-    color: var(--color-blue-500);
-    cursor: pointer;
-    padding: 4px;
+  background: none;
+  border: none;
+  color: var(--color-blue-500);
+  cursor: pointer;
+  padding: 4px;
 }
 
 .send-btn:disabled {
-    color: var(--color-gray-400);
-    cursor: not-allowed;
+  color: var(--color-gray-400);
+  cursor: not-allowed;
 }
 
 .comments-scroll-area {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 20px;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
 }
 
 .comment-item {
-    margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #f5f5f5;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f5f5f5;
 }
 
 .comment-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--color-gray-500);
-    margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Align centers */
+  font-size: 12px;
+  color: var(--color-gray-500);
+  margin-bottom: 4px;
 }
 
 .author-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .author-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    object-fit: cover;
-    background-color: var(--color-gray-200);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--color-gray-200);
 }
 
 .author-avatar.placeholder {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--color-gray-300);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-gray-300);
 }
 
 .author {
-    font-weight: 600;
-    color: #333;
+  font-weight: 600;
+  color: #333;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--color-gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  color: var(--color-danger);
+  background-color: rgba(0, 0, 0, 0.05);
+  /* Slight hover effect */
+  border-radius: 50%;
 }
 
 .content {
-    font-size: 14px;
-    line-height: 1.5;
-    color: #444;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #444;
 }
 
 .loading-state,
 .empty-state {
-    text-align: center;
-    padding: 40px 0;
-    color: var(--color-gray-500);
-    font-size: 14px;
+  text-align: center;
+  padding: 40px 0;
+  color: var(--color-gray-500);
+  font-size: 14px;
 }
 </style>

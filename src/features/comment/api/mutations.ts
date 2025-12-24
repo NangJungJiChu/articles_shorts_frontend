@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import { createComment } from './api'
+import { createComment, deleteComment } from './api'
 import { commentKeys } from './queries'
 
 export function useCreateCommentMutation() {
@@ -10,6 +10,17 @@ export function useCreateCommentMutation() {
       createComment(postId, content),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: commentKeys.list(variables.postId) })
+    },
+  })
+}
+
+export function useDeleteCommentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ commentId }: { commentId: number }) => deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys.all })
     },
   })
 }
