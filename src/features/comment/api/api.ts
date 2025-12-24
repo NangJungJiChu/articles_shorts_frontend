@@ -4,6 +4,7 @@ export interface Comment {
   id: number
   content: string
   author_username: string
+  author_profile_image?: string
   created_at: string
 }
 

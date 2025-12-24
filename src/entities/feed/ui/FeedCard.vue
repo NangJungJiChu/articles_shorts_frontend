@@ -18,6 +18,7 @@ interface Props {
   isLiked: boolean
   postId: number
   disableViewTracking?: boolean
+  authorProfileImage?: string
 }
 
 const emit = defineEmits<{
@@ -110,6 +111,11 @@ const formatCount = (count: number | string) => {
     <!-- 1. Content Area -->
     <div ref="contentRef" class="feed-content-wrapper">
       <header class="post-header">
+        <div class="author-info">
+          <img v-if="authorProfileImage" :src="authorProfileImage" alt="Author" class="author-avatar" />
+          <div v-else class="author-avatar placeholder"></div>
+          <span class="author-name">{{ author }}</span>
+        </div>
         <h2 class="post-title">{{ title }}</h2>
       </header>
       <div class="post-content markdown-body" v-html="renderedContent"></div>
@@ -206,6 +212,35 @@ const formatCount = (count: number | string) => {
   font-weight: 700;
   color: var(--color-black);
   margin: 0;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.author-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--color-gray-200);
+}
+
+.author-avatar.placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-gray-300);
+}
+
+.author-name {
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-gray-900);
 }
 
 .post-content {

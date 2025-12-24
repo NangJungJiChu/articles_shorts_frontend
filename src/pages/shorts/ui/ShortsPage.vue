@@ -44,7 +44,8 @@ const getPostProps = (item: DisplayItem) => {
     commentsCount: post.comments.length,
     isLiked: post.is_liked,
     postId: post.id,
-    author: post.author_username
+    author: post.author_username,
+    authorProfileImage: post.author_profile_image
   }
 }
 

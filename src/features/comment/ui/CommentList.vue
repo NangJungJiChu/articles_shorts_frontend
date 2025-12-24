@@ -43,7 +43,8 @@ const formatDate = (dateString: string) => {
     <div class="comment-list-container">
         <!-- Input Area -->
         <form class="comment-input-area" @submit.prevent="handleSubmit">
-            <input v-model="newComment" type="text" placeholder="댓글을 입력하세요..." class="comment-input" :disabled="isSubmitting" />
+            <input v-model="newComment" type="text" placeholder="댓글을 입력하세요..." class="comment-input"
+                :disabled="isSubmitting" />
             <button class="send-btn" :disabled="!newComment.trim() || isSubmitting">
                 <Icon name="send" />
             </button>
@@ -62,7 +63,12 @@ const formatDate = (dateString: string) => {
             <ul v-else class="comment-items">
                 <li v-for="comment in comments" :key="comment.id" class="comment-item">
                     <div class="comment-header">
-                        <span class="author">{{ comment.author_username }}</span>
+                        <div class="author-info">
+                            <img v-if="comment.author_profile_image" :src="comment.author_profile_image" alt="User"
+                                class="author-avatar" />
+                            <div v-else class="author-avatar placeholder"></div>
+                            <span class="author">{{ comment.author_username }}</span>
+                        </div>
                         <span class="date">{{ formatDate(comment.created_at) }}</span>
                     </div>
                     <p class="content">{{ comment.content }}</p>
@@ -81,15 +87,15 @@ const formatDate = (dateString: string) => {
 }
 
 .comment-input-area {
-  background-color: var(--color-white, #fff);
-  position: sticky;
-  top: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 0;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 16px;
+    background-color: var(--color-white, #fff);
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 16px;
 }
 
 .comment-input {
@@ -136,6 +142,27 @@ const formatDate = (dateString: string) => {
     font-size: 12px;
     color: var(--color-gray-500);
     margin-bottom: 4px;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.author-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--color-gray-200);
+}
+
+.author-avatar.placeholder {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--color-gray-300);
 }
 
 .author {
