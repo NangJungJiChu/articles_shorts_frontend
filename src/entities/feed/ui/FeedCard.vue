@@ -10,18 +10,18 @@ import { usePostInteractions } from '@/entities/post/lib/usePostInteractions'
 import { useViewTracking } from '@/entities/post/lib/useViewTracking'
 
 interface Props {
-    title: string
-    author: string
-    content: string
-    likesCount: number
-    commentsCount: number
-    isLiked: boolean
-    postId: number
-    disableViewTracking?: boolean
+  title: string
+  author: string
+  content: string
+  likesCount: number
+  commentsCount: number
+  isLiked: boolean
+  postId: number
+  disableViewTracking?: boolean
 }
 
 const emit = defineEmits<{
-    (e: 'remove', id: number): void
+  (e: 'remove', id: number): void
 }>()
 
 const props = defineProps<Props>()
@@ -33,50 +33,50 @@ const contentRef = ref<HTMLElement | null>(null)
 // 1. Post Interactions (Like, Delete, etc.)
 // Passing invalidation keys for both general lists and the liked list
 const {
-    localIsLiked,
-    localLikesCount,
-    isReportModalOpen,
-    isCommentModalOpen,
-    isAuthor,
-    handleLike,
-    handleReport,
-    handleNotInterested,
-    handleDelete
+  localIsLiked,
+  localLikesCount,
+  isReportModalOpen,
+  isCommentModalOpen,
+  isAuthor,
+  handleLike,
+  handleReport,
+  handleNotInterested,
+  handleDelete
 } = usePostInteractions(props, [postKeys.likedList({ page_size: 10 })])
 
 const onReport = async () => {
-    const success = await handleReport(reportReason.value)
-    handleCloseReasonModal()
-    if (success) {
-        emit('remove', props.postId)
-    }
+  const success = await handleReport(reportReason.value)
+  handleCloseReasonModal()
+  if (success) {
+    emit('remove', props.postId)
+  }
 }
 
 const onNotInterested = async () => {
-    const success = await handleNotInterested()
-    if (success) {
-        emit('remove', props.postId)
-    }
+  const success = await handleNotInterested()
+  if (success) {
+    emit('remove', props.postId)
+  }
 }
 
 const onDelete = async () => {
-    const success = await handleDelete()
-    if (success) {
-        emit('remove', props.postId)
-    }
+  const success = await handleDelete()
+  if (success) {
+    emit('remove', props.postId)
+  }
 }
 
 const isReasonModalOpen = ref(false)
 const reportReason = ref('')
 
 const handleOpenReasonModal = () => {
-    isReportModalOpen.value = false
-    isReasonModalOpen.value = true
+  isReportModalOpen.value = false
+  isReasonModalOpen.value = true
 }
 
 const handleCloseReasonModal = () => {
-    isReasonModalOpen.value = false
-    reportReason.value = ''
+  isReasonModalOpen.value = false
+  reportReason.value = ''
 }
 
 // 2. Markdown Rendering
@@ -89,265 +89,243 @@ useViewTracking(props.postId, cardRef, () => !props.disableViewTracking)
 const localCommentsCount = ref(props.commentsCount)
 
 watch(() => props.commentsCount, (newCount) => {
-    localCommentsCount.value = newCount
+  localCommentsCount.value = newCount
 })
 
 const handleCommentAdded = () => {
-    localCommentsCount.value++
+  localCommentsCount.value++
 }
 
 // --- Helper ---
 const formatCount = (count: number | string) => {
-    const num = Number(count)
-    if (isNaN(num)) return count
-    return num > 999 ? `${(num / 1000).toFixed(1)}k` : num
+  const num = Number(count)
+  if (isNaN(num)) return count
+  return num > 999 ? `${(num / 1000).toFixed(1)}k` : num
 }
 </script>
 
 <template>
-    <article ref="cardRef" class="feed-card">
-        <!-- 1. Content Area -->
-        <div ref="contentRef" class="feed-content-wrapper">
-            <header class="post-header">
-                <h2 class="post-title">{{ title }}</h2>
-            </header>
-            <div class="post-content markdown-body" v-html="renderedContent"></div>
+  <article ref="cardRef" class="feed-card">
+    <!-- 1. Content Area -->
+    <div ref="contentRef" class="feed-content-wrapper">
+      <header class="post-header">
+        <h2 class="post-title">{{ title }}</h2>
+      </header>
+      <div class="post-content markdown-body" v-html="renderedContent"></div>
+    </div>
+
+    <!-- 2. Interaction Footer -->
+    <footer class="post-footer">
+      <!-- Like Button -->
+      <button class="action-btn" @click="handleLike">
+        <Icon name="favorite" :type="localIsLiked ? 'filled' : 'outlined'" :class="{ 'is-liked': localIsLiked }" />
+        <span class="count">{{ formatCount(localLikesCount) }}</span>
+      </button>
+
+      <!-- Comment Button -->
+      <button class="action-btn" @click="isCommentModalOpen = true">
+        <Icon name="chat_bubble" />
+        <span class="count">{{ formatCount(localCommentsCount) }}</span>
+      </button>
+
+      <!-- More Options Button -->
+      <button class="action-btn more-btn" @click="isReportModalOpen = true">
+        <Icon name="more_vert" />
+      </button>
+    </footer>
+
+    <!-- 3. Modals -->
+    <!-- Comment Modal -->
+    <Modal :isOpen="isCommentModalOpen" title="댓글" @close="isCommentModalOpen = false">
+      <CommentList :postId="postId" @comment-added="handleCommentAdded" />
+    </Modal>
+
+    <!-- More Options Modal -->
+    <!-- More Options Modal -->
+    <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+      <div class="menu-list">
+        <button v-if="isAuthor" class="menu-item delete-btn" @click="onDelete">
+          <Icon name="delete" />
+          <span>삭제하기</span>
+        </button>
+        <button class="menu-item" @click="handleOpenReasonModal">
+          <Icon name="report" />
+          <span>신고/차단하기</span>
+        </button>
+        <button class="menu-item" @click="onNotInterested">
+          <Icon name="visibility_off" />
+          <span>관심없음</span>
+        </button>
+      </div>
+    </Modal>
+
+    <!-- Report Reason Modal -->
+    <Modal :isOpen="isReasonModalOpen" title="신고 사유 입력" @close="handleCloseReasonModal">
+      <div class="report-reason-container">
+        <textarea v-model="reportReason" class="reason-input" placeholder="신고 사유를 입력해주세요..."></textarea>
+        <div class="report-actions">
+          <Button variant="secondary" @click="handleCloseReasonModal">
+            취소
+          </Button>
+          <Button variant="primary" :disabled="!reportReason.trim()" @click="onReport">
+            신고
+          </Button>
         </div>
-
-        <!-- 2. Interaction Footer -->
-        <footer class="post-footer">
-            <!-- Like Button -->
-            <button class="action-btn" @click="handleLike">
-                <Icon
-                    name="favorite"
-                    :type="localIsLiked ? 'filled' : 'outlined'"
-                    :class="{ 'is-liked': localIsLiked }"
-                />
-                <span class="count">{{ formatCount(localLikesCount) }}</span>
-            </button>
-
-            <!-- Comment Button -->
-            <button class="action-btn" @click="isCommentModalOpen = true">
-                <Icon name="chat_bubble" />
-                <span class="count">{{ formatCount(localCommentsCount) }}</span>
-            </button>
-
-            <!-- More Options Button -->
-            <button class="action-btn more-btn" @click="isReportModalOpen = true">
-                <Icon name="more_vert" />
-            </button>
-        </footer>
-
-        <!-- 3. Modals -->
-        <!-- Comment Modal -->
-        <Modal
-            :isOpen="isCommentModalOpen"
-            title="댓글"
-            @close="isCommentModalOpen = false"
-        >
-            <CommentList :postId="postId" @comment-added="handleCommentAdded" />
-        </Modal>
-
-        <!-- More Options Modal -->
-        <!-- More Options Modal -->
-        <Modal
-            :isOpen="isReportModalOpen"
-            title="더보기"
-            @close="isReportModalOpen = false"
-        >
-            <div class="menu-list">
-                <button v-if="isAuthor" class="menu-item delete-btn" @click="onDelete">
-                    <Icon name="delete" />
-                    <span>삭제하기</span>
-                </button>
-                <button class="menu-item" @click="handleOpenReasonModal">
-                    <Icon name="report" />
-                    <span>신고/차단하기</span>
-                </button>
-                <button class="menu-item" @click="onNotInterested">
-                    <Icon name="visibility_off" />
-                    <span>관심없음</span>
-                </button>
-            </div>
-        </Modal>
-
-        <!-- Report Reason Modal -->
-        <Modal
-            :isOpen="isReasonModalOpen"
-            title="신고 사유 입력"
-            @close="handleCloseReasonModal"
-        >
-            <div class="report-reason-container">
-                <textarea
-                    v-model="reportReason"
-                    class="reason-input"
-                    placeholder="신고 사유를 입력해주세요..."
-                ></textarea>
-                <div class="report-actions">
-                    <Button variant="secondary" @click="handleCloseReasonModal">
-                        취소
-                    </Button>
-                    <Button
-                        variant="primary"
-                        :disabled="!reportReason.trim()"
-                        @click="onReport"
-                    >
-                        신고
-                    </Button>
-                </div>
-            </div>
-        </Modal>
-    </article>
+      </div>
+    </Modal>
+  </article>
 </template>
 
 <style scoped>
 .feed-card {
-    width: 100%;
-    max-width: 610px;
-    background: var(--color-white);
-    padding: 24px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    border-bottom: 1px solid var(--color-gray-100);
+  width: 100%;
+  max-width: 610px;
+  background: var(--color-white);
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-bottom: 1px solid var(--color-gray-100);
 }
 
 /* Content Area */
 .feed-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .post-header {
-    padding: 0 16px;
+  padding: 0 16px;
 }
 
 .post-title {
-    font-family: var(--font-family-base);
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--color-black);
-    margin: 0;
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-black);
+  margin: 0;
 }
 
 .post-content {
-    padding: 0 16px;
-    font-family: var(--font-family-base);
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--color-gray-800);
+  padding: 0 16px;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-gray-800);
+  word-wrap: break-word;
 }
 
 /* Markdown Specifics */
 :deep(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-top: 8px;
-    background-color: var(--color-gray-100);
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-top: 8px;
+  background-color: var(--color-gray-100);
 }
 
 :deep(p) {
-    margin: 0 0 8px 0;
-    line-height: var(--font-body-large-line-height);
+  margin: 0 0 8px 0;
+  line-height: var(--font-body-large-line-height);
 }
 
 :deep(p:last-child) {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 /* Interaction Footer */
 .post-footer {
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .action-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--color-gray-900);
-    padding: 4px;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-gray-900);
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .action-btn:hover {
-    background-color: var(--color-gray-50);
+  background-color: var(--color-gray-50);
 }
 
 .action-btn .icon.is-liked {
-    color: var(--color-danger); /* Changed to use token if available, or keep custom red? colors.css has danger: #df0b0b */
+  color: var(--color-danger);
+  /* Changed to use token if available, or keep custom red? colors.css has danger: #df0b0b */
 }
 
 .count {
-    font-family: var(--font-family-base);
-    font-size: 14px;
-    font-weight: 600;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .more-btn {
-    margin-left: auto;
+  margin-left: auto;
 }
 
 /* Modal Menu Items */
 .menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    padding: 12px;
-    background: none;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-    color: var(--color-gray-900);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  color: var(--color-gray-900);
 }
 
 .menu-item:hover {
-    background-color: var(--color-gray-100);
+  background-color: var(--color-gray-100);
 }
 
 .menu-item.delete-btn {
-    color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 /* Report Reason Styling */
 .report-reason-container {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .reason-input {
-    width: 100%;
-    height: 120px;
-    padding: 12px;
-    border: 1px solid var(--color-gray-300);
-    border-radius: 8px;
-    resize: none;
-    font-family: var(--font-family-base);
-    font-size: var(--font-body-medium-size);
-    box-sizing: border-box;
-    color: var(--color-gray-900);
+  width: 100%;
+  height: 120px;
+  padding: 12px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  resize: none;
+  font-family: var(--font-family-base);
+  font-size: var(--font-body-medium-size);
+  box-sizing: border-box;
+  color: var(--color-gray-900);
 }
 
 .reason-input::placeholder {
-    color: var(--color-gray-500);
+  color: var(--color-gray-500);
 }
 
 .report-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 </style>
