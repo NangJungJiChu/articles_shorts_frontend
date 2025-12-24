@@ -3,6 +3,8 @@ import { toggleLikePost, interactWithPost, reportPost } from '@/features/post-in
 import { deletePost } from '@/entities/post'
 import { queryClient } from '@/shared/api'
 import { useAuthStore } from '@/features/auth'
+import { useToast } from '@/shared/ui/toast'
+import { useConfirm } from '@/shared/ui/confirm'
 import type { QueryKey } from '@tanstack/vue-query'
 
 interface InteractionProps {
@@ -15,11 +17,15 @@ interface InteractionProps {
 export function usePostInteractions(props: InteractionProps, invalidateKeys: QueryKey[] = []) {
   const localIsLiked = ref(props.isLiked)
   const localLikesCount = ref(Number(props.likesCount))
-  const isReportModalOpen = ref(false)
+  // change isReportModalOpen
+  const isMenuModalOpen = ref(false)
   const isCommentModalOpen = ref(false)
 
   const authStore = useAuthStore()
   const isAuthor = ref(authStore.user?.username === props.author)
+
+  const { showToast } = useToast()
+  const { confirm } = useConfirm()
 
   watch(() => props.isLiked, (val) => (localIsLiked.value = val))
   watch(() => props.likesCount, (val) => (localLikesCount.value = Number(val)))
@@ -46,7 +52,7 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
       console.error('Like toggle failed:', error)
       localIsLiked.value = prevIsLiked
       localLikesCount.value = prevCount
-      alert('Failed to update like')
+      showToast('좋아요 업데이트에 실패했습니다.', 'error')
     }
   }
 
@@ -56,10 +62,12 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
       await reportPost(props.postId, reason)
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       queryClient.invalidateQueries({ queryKey: ['shorts'] })
-      isReportModalOpen.value = false
+      isMenuModalOpen.value = false
+      showToast('신고가 접수되었습니다.', 'success')
       return true
     } catch (error) {
       console.error('Report failed:', error)
+      showToast('신고 접수에 실패했습니다.', 'error')
       return false
     }
   }
@@ -67,20 +75,23 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
   const handleNotInterested = async (): Promise<boolean> => {
     try {
       await interactWithPost(props.postId, 'NOT_INTERESTED')
-      isReportModalOpen.value = false
+      isMenuModalOpen.value = false
+      showToast('관심 없음으로 설정되었습니다.', 'success')
       return true
     } catch (error) {
       console.error('Not interested action failed:', error)
+      showToast('작업에 실패했습니다.', 'error')
       return false
     }
   }
 
   const handleDelete = async (): Promise<boolean> => {
-    if (!confirm('정말 삭제하시겠습니까?')) return false
+    const confirmed = await confirm('게시글을 정말 삭제하시겠습니까?', '삭제 확인')
+    if (!confirmed) return false
 
     try {
       await deletePost(props.postId)
-      alert('게시글이 삭제되었습니다.')
+      showToast('게시글이 삭제되었습니다.', 'success')
 
       // Always invalidate the general lists on delete
       queryClient.invalidateQueries({ queryKey: ['posts'] })
@@ -90,11 +101,11 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
         queryClient.invalidateQueries({ queryKey: key })
       })
 
-      isReportModalOpen.value = false
+      isMenuModalOpen.value = false
       return true
     } catch (error) {
       console.error('Delete failed:', error)
-      alert('삭제에 실패했습니다.')
+      showToast('삭제에 실패했습니다.', 'error')
       return false
     }
   }
@@ -102,7 +113,7 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
   return {
     localIsLiked,
     localLikesCount,
-    isReportModalOpen,
+    isMenuModalOpen: isMenuModalOpen,
     isCommentModalOpen,
     isAuthor,
     handleLike,

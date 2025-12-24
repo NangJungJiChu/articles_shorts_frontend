@@ -35,7 +35,7 @@ const contentRef = ref<HTMLElement | null>(null)
 const {
   localIsLiked,
   localLikesCount,
-  isReportModalOpen,
+  isMenuModalOpen,
   isCommentModalOpen,
   isAuthor,
   handleLike,
@@ -60,6 +60,7 @@ const onNotInterested = async () => {
 }
 
 const onDelete = async () => {
+  isMenuModalOpen.value = false
   const success = await handleDelete()
   if (success) {
     emit('remove', props.postId)
@@ -70,7 +71,7 @@ const isReasonModalOpen = ref(false)
 const reportReason = ref('')
 
 const handleOpenReasonModal = () => {
-  isReportModalOpen.value = false
+  isMenuModalOpen.value = false
   isReasonModalOpen.value = true
 }
 
@@ -129,7 +130,7 @@ const formatCount = (count: number | string) => {
       </button>
 
       <!-- More Options Button -->
-      <button class="action-btn more-btn" @click="isReportModalOpen = true">
+      <button class="action-btn more-btn" @click="isMenuModalOpen = true">
         <Icon name="more_vert" />
       </button>
     </footer>
@@ -142,7 +143,7 @@ const formatCount = (count: number | string) => {
 
     <!-- More Options Modal -->
     <!-- More Options Modal -->
-    <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+    <Modal :isOpen="isMenuModalOpen" title="더보기" @close="isMenuModalOpen = false">
       <div class="menu-list">
         <button v-if="isAuthor" class="menu-item delete-btn" @click="onDelete">
           <Icon name="delete" />

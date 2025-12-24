@@ -3,6 +3,8 @@ import { computed, onMounted } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import { BottomTabBar } from '@/widgets/bottom-navigation/ui'
 import { useAuthStore } from '@/features/auth'
+import { ToastContainer } from '@/shared/ui/toast'
+import { ConfirmModal } from '@/shared/ui/confirm'
 
 const route = useRoute()
 const showBottomNav = computed(() => !!route.meta.requiresAuth)
@@ -23,6 +25,8 @@ onMounted(() => {
             <div v-if="showBottomNav" class="bottom-nav-wrapper">
                 <BottomTabBar />
             </div>
+            <ToastContainer />
+            <ConfirmModal />
         </div>
     </div>
 </template>

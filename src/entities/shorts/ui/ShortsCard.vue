@@ -37,7 +37,7 @@ const contentRef = ref<HTMLElement | null>(null)
 const {
   localIsLiked,
   localLikesCount,
-  isReportModalOpen,
+  isMenuModalOpen,
   isCommentModalOpen,
   isAuthor,
   handleLike,
@@ -72,7 +72,7 @@ const isReasonModalOpen = ref(false)
 const reportReason = ref('')
 
 const handleOpenReasonModal = () => {
-  isReportModalOpen.value = false
+  isMenuModalOpen.value = false
   isReasonModalOpen.value = true
 }
 
@@ -142,7 +142,7 @@ const formatCount = (count: number | string) => {
       </button>
 
       <!-- More Options Button -->
-      <button class="action-btn more-btn" @click.stop="isReportModalOpen = true">
+      <button class="action-btn more-btn" @click.stop="isMenuModalOpen = true">
         <Icon name="more_vert" class="icon" />
       </button>
     </div>
@@ -153,7 +153,7 @@ const formatCount = (count: number | string) => {
       <CommentList :postId="postId" @comment-added="handleCommentAdded" />
     </Modal>
 
-    <Modal :isOpen="isReportModalOpen" title="더보기" @close="isReportModalOpen = false">
+    <Modal :isOpen="isMenuModalOpen" title="더보기" @close="isMenuModalOpen = false">
       <div class="menu-list">
         <button v-if="isAuthor" class="menu-item delete-btn" @click="onDelete">
           <Icon name="delete" />
