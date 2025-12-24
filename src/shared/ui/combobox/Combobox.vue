@@ -27,6 +27,10 @@ const isOpen = ref(false)
 const searchQuery = ref('')
 const wrapperRef = ref<HTMLElement | null>(null)
 
+const changeSearchQuery = (e: Event) => {
+    searchQuery.value = (e.target as HTMLInputElement).value
+}
+
 const selectedLabel = computed(() => {
     const selected = props.options.find(opt => opt.id === props.modelValue)
     return selected ? selected.label : props.placeholder
@@ -83,7 +87,7 @@ watch(isOpen, (newVal) => {
             <!-- Search Input -->
             <div class="search-container">
                 <Icon name="search" class="search-icon" />
-                <input ref="searchInput" v-model="searchQuery" type="text" :placeholder="searchPlaceholder"
+                <input ref="searchInput" :value="searchQuery" @input="changeSearchQuery" type="text" :placeholder="searchPlaceholder"
                     class="search-input" @click.stop />
             </div>
 
