@@ -89,10 +89,20 @@ const handleBack = () => {
                     class="content-editor" @paste="handlePaste"></textarea>
 
                 <!-- Image Upload Button -->
-                <button class="upload-btn" @click="triggerFileUpload" :disabled="isUploading || isSubmitting">
-                    <Icon name="image" />
-                    <span>{{ isUploading ? '업로드 중...' : '이미지 추가' }}</span>
-                </button>
+                <div class="upload-actions">
+                    <Button
+                        variant="secondary"
+                        size="small"
+                        @click="triggerFileUpload"
+                        :disabled="isUploading || isSubmitting"
+                        class="upload-btn"
+                    >
+                        <div class="btn-content">
+                            <Icon name="image" />
+                            <span>{{ isUploading ? '업로드 중...' : '이미지 추가' }}</span>
+                        </div>
+                    </Button>
+                </div>
                 <input ref="fileInput" type="file" accept="image/*" multiple class="hidden-input"
                     @change="handleImageUpload" />
             </div>
@@ -114,6 +124,7 @@ const handleBack = () => {
     background-color: var(--color-white);
 }
 
+/* Header Section */
 .header {
     display: flex;
     align-items: center;
@@ -139,11 +150,12 @@ const handleBack = () => {
 }
 
 .header-actions {
-    width: 80px; /* Constrain button width */
+    width: 80px;
+    display: flex;
+    justify-content: flex-end;
 }
 
-/* Override button styles if needed, but try to rely on component defaults */
-
+/* Tabs Section */
 .tabs {
     display: flex;
     border-bottom: 1px solid var(--color-gray-300);
@@ -156,11 +168,11 @@ const handleBack = () => {
     border: none;
     font-family: var(--font-family-base);
     font-size: var(--font-label-large-size);
-    line-height: var(--font-label-large-line-height);
     font-weight: 500;
     color: var(--color-gray-600);
     cursor: pointer;
     border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
 }
 
 .tab-btn.active {
@@ -168,14 +180,20 @@ const handleBack = () => {
     border-bottom-color: var(--color-blue-600);
 }
 
+/* Main Container Styles */
 .write-container,
 .preview-container {
     flex: 1;
     display: flex;
     flex-direction: column;
     padding: 16px;
-    padding-bottom: 58px;
+    padding-bottom: 58px; /* Safe area for bottom nav/actions if needed */
     overflow-y: auto;
+}
+
+/* Write Mode Styles */
+.input-group {
+    margin-bottom: 16px;
 }
 
 .title-input {
@@ -183,13 +201,12 @@ const handleBack = () => {
     padding: 12px 0;
     font-family: var(--font-family-base);
     font-size: var(--font-headline-small-size);
-    line-height: var(--font-headline-small-line-height);
     font-weight: 600;
     border: none;
     border-bottom: 1px solid var(--color-gray-300);
     outline: none;
-    margin-bottom: 16px;
     color: var(--color-gray-900);
+    background: transparent;
 }
 
 .title-input::placeholder {
@@ -201,6 +218,8 @@ const handleBack = () => {
     display: flex;
     flex-direction: column;
     position: relative;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .content-editor {
@@ -211,44 +230,34 @@ const handleBack = () => {
     outline: none;
     font-family: var(--font-family-base);
     font-size: var(--font-body-large-size);
-    line-height: var(--font-body-large-line-height);
+    line-height: 1.6;
     color: var(--color-gray-900);
-    padding-bottom: 60px;
-    /* Space for upload button */
+    background: transparent;
 }
 
 .content-editor::placeholder {
     color: var(--color-gray-400);
 }
 
-.upload-btn {
-    position: absolute;
-    bottom: 0;
-    left: 0;
+/* Image Upload Styles */
+.upload-actions {
+    display: flex;
+    justify-content: flex-start;
+    width: 140px;
+}
+
+
+.btn-content {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
-    background-color: var(--color-gray-100);
-    border: 1px solid var(--color-gray-300);
-    border-radius: 20px;
-    cursor: pointer;
-
-    font-family: var(--font-family-base);
-    font-size: var(--font-label-medium-size);
-    font-weight: 500;
-    color: var(--color-gray-700);
-    transition: background-color 0.2s;
-}
-
-.upload-btn:hover {
-    background-color: var(--color-gray-200);
 }
 
 .hidden-input {
     display: none;
 }
 
+/* Preview Mode Styles */
 .preview-title {
     font-family: var(--font-family-base);
     font-size: var(--font-headline-large-size);
@@ -266,7 +275,7 @@ const handleBack = () => {
     color: var(--color-gray-900);
 }
 
-/* Basic Markdown Styles */
+/* Deep Styles for Markdown Content */
 :deep(.markdown-body img) {
     max-width: 100%;
     border-radius: 8px;
