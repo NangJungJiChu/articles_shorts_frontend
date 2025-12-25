@@ -139,29 +139,31 @@ const formatCount = (count: number | string) => {
 
     <!-- 2. Interaction Footer -->
     <footer class="post-footer">
-      <!-- Like Button -->
-      <button class="action-btn" @click="handleLike">
-        <Icon name="favorite" :type="localIsLiked ? 'filled' : 'outlined'" :class="{ 'is-liked': localIsLiked }" />
-        <span class="count">{{ formatCount(localLikesCount) }}</span>
-      </button>
-
-      <!-- Comment Button -->
-      <button class="action-btn" @click="isCommentModalOpen = true">
-        <Icon name="chat_bubble" />
-        <span class="count">{{ formatCount(localCommentsCount) }}</span>
-      </button>
-
-      <!-- Share Button -->
-      <div class="share-container">
-        <button class="action-btn share-btn" @click="handleShare">
-          <Icon name="send" />
+      <div class="interaction-group">
+        <!-- Like Button -->
+        <button class="action-btn" @click="handleLike">
+          <Icon name="favorite" :type="localIsLiked ? 'filled' : 'outlined'" :class="{ 'is-liked': localIsLiked }" />
+          <span class="count">{{ formatCount(localLikesCount) }}</span>
         </button>
-        <Transition name="fade">
-          <div v-if="showShareTooltip" class="share-tooltip">
-            <Icon name="check_circle" size="small" />
-            링크 복사 완료
-          </div>
-        </Transition>
+
+        <!-- Comment Button -->
+        <button class="action-btn" @click="isCommentModalOpen = true">
+          <Icon name="chat_bubble" />
+          <span class="count">{{ formatCount(localCommentsCount) }}</span>
+        </button>
+
+        <!-- Share Button -->
+        <div class="share-container">
+          <button class="action-btn share-btn" @click="handleShare">
+            <Icon name="send" />
+          </button>
+          <Transition name="fade">
+            <div v-if="showShareTooltip" class="share-tooltip">
+              <Icon name="check_circle" size="small" />
+              링크 복사 완료
+            </div>
+          </Transition>
+        </div>
       </div>
 
       <!-- More Options Button -->
@@ -301,10 +303,19 @@ const formatCount = (count: number | string) => {
 
 /* Interaction Footer */
 .post-footer {
-  padding: 0 16px;
+  padding: 0 16px; /* Reset padding to be consistent, but we will use auto margin on the button if needed, or maybe just remove right padding? */
+  /* User wants it "at the end". If 16px is too much, maybe they mean flush? */
+  /* Let's try separate padding for left and right to push it closer if that's the request, or ensure width is 100% */
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: space-between;
+}
+
+.interaction-group {
+  display: flex;
+  align-items: center;
+  gap: 16px; 
 }
 
 .action-btn {
@@ -336,7 +347,7 @@ const formatCount = (count: number | string) => {
 }
 
 .more-btn {
-  margin-left: auto;
+  /* margin-left: auto; Removed as we use justify-content: space-between */
 }
 
 /* Modal Menu Items */

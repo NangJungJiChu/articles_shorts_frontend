@@ -10,6 +10,7 @@ import { useAuthStore } from '@/features/auth/model/store'
 import { Button } from '@/shared/ui/button'
 import { useRouter } from 'vue-router'
 import SimpleAuthModal from '@/shared/ui/modal/SimpleAuthModal.vue'
+import PasswordChangeModal from '@/shared/ui/modal/PasswordChangeModal.vue'
 import { httpClient } from '@/shared/api'
 
 const activeTab = ref<'likes' | 'posts'>('likes')
@@ -17,6 +18,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const isPassModalOpen = ref(false)
+const isPasswordModalOpen = ref(false)
 
 const handlePassVerified = async () => {
   try {
@@ -31,6 +33,22 @@ const handlePassVerified = async () => {
 const handleLogout = () => {
   authStore.logout()
   router.push('/login')
+}
+
+const handleWithdrawal = async () => {
+  if (!confirm('정말로 탈퇴하시겠습니까? 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
+    return
+  }
+  
+  try {
+    await httpClient.delete('/accounts/api/user/delete/')
+    alert('회원 탈퇴가 완료되었습니다.')
+    authStore.logout()
+    router.push('/login')
+  } catch (err) {
+    console.error('Withdrawal failed:', err)
+    alert('회원 탈퇴 중 오류가 발생했습니다.')
+  }
 }
 
 
@@ -153,15 +171,30 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <Button variant="secondary" size="small" @click="handleLogout" class="logout-btn">
-          로그아웃
-        </Button>
+        <div class="account-actions">
+          <div class="action-buttons-grid">
+            <Button variant="secondary" class="profile-action-btn" @click="isPasswordModalOpen = true">
+              비밀번호 변경
+            </Button>
+            <Button variant="secondary" class="profile-action-btn" @click="handleLogout">
+              로그아웃
+            </Button>
+          </div>
+          <button class="withdrawal-btn" @click="handleWithdrawal">
+            회원 탈퇴
+          </button>
+        </div>
       </div>
 
       <SimpleAuthModal 
         :is-open="isPassModalOpen"
         @close="isPassModalOpen = false"
         @verified="handlePassVerified"
+      />
+
+      <PasswordChangeModal
+        :is-open="isPasswordModalOpen"
+        @close="isPasswordModalOpen = false"
       />
     </header>
 
@@ -313,6 +346,48 @@ onUnmounted(() => {
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px; /* Increased max-width for better spacing */
+}
+
+.action-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+:deep(.profile-action-btn) {
+  width: 100%;
+  height: 48px; /* Taller touch target */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 12px; /* Smoother corners */
+}
+
+.withdrawal-btn {
+  background: none;
+  border: none;
+  color: var(--color-gray-500);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.withdrawal-btn:hover {
+  color: var(--color-danger);
 }
 </style>
