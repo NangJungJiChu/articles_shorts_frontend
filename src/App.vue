@@ -43,7 +43,7 @@ body {
 
 <style scoped>
 .app-container {
-    min-height: 100vh;
+    min-height: 100dvh;
     background-color: #fafafa;
     /* Optional: distinct bg for outside area */
 }
@@ -54,7 +54,7 @@ body {
     margin: 0 auto;
     position: relative;
     background-color: var(--color-white);
-    min-height: 100vh;
+    min-height: 100dvh;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
     /* Optional: visual separation */
 }

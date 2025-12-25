@@ -27,11 +27,20 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
   const { showToast } = useToast()
   const { confirm } = useConfirm()
 
-  watch(() => props.isLiked, (val) => (localIsLiked.value = val))
-  watch(() => props.likesCount, (val) => (localLikesCount.value = Number(val)))
-  watch(() => authStore.user?.username, (username) => {
-    isAuthor.value = username === props.author
-  })
+  watch(
+    () => props.isLiked,
+    (val) => (localIsLiked.value = val),
+  )
+  watch(
+    () => props.likesCount,
+    (val) => (localLikesCount.value = Number(val)),
+  )
+  watch(
+    () => authStore.user?.username,
+    (username) => {
+      isAuthor.value = username === props.author
+    },
+  )
 
   const handleLike = async () => {
     const prevIsLiked = localIsLiked.value
@@ -45,7 +54,7 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
       localIsLiked.value = response.is_liked
       localLikesCount.value = response.like_count
 
-      invalidateKeys.forEach(key => {
+      invalidateKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: key })
       })
     } catch (error) {
@@ -59,11 +68,11 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
   const handleReport = async (reason: string): Promise<boolean> => {
     if (!reason) return false
     try {
+      isMenuModalOpen.value = false
+      showToast('신고가 접수되었습니다.', 'success')
       await reportPost(props.postId, reason)
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       queryClient.invalidateQueries({ queryKey: ['shorts'] })
-      isMenuModalOpen.value = false
-      showToast('신고가 접수되었습니다.', 'success')
       return true
     } catch (error) {
       console.error('Report failed:', error)
@@ -74,8 +83,8 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
 
   const handleNotInterested = async (): Promise<boolean> => {
     try {
-      await interactWithPost(props.postId, 'NOT_INTERESTED')
       isMenuModalOpen.value = false
+      await interactWithPost(props.postId, 'NOT_INTERESTED')
       showToast('관심 없음으로 설정되었습니다.', 'success')
       return true
     } catch (error) {
@@ -97,7 +106,7 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
       queryClient.invalidateQueries({ queryKey: ['posts'] })
       queryClient.invalidateQueries({ queryKey: ['shorts'] })
 
-      invalidateKeys.forEach(key => {
+      invalidateKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: key })
       })
 
@@ -113,7 +122,7 @@ export function usePostInteractions(props: InteractionProps, invalidateKeys: Que
   return {
     localIsLiked,
     localLikesCount,
-    isMenuModalOpen: isMenuModalOpen,
+    isMenuModalOpen,
     isCommentModalOpen,
     isAuthor,
     handleLike,

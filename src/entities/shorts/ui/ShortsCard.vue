@@ -3,6 +3,7 @@ import { ref, toRef, watch } from 'vue'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
 import { Button } from '@/shared/ui/button'
+import { Badge } from '@/shared/ui/badge'
 import { CommentList } from '@/features/comment'
 import { useMarkdown } from '@/entities/post/lib/useMarkdown'
 import { usePostInteractions } from '@/entities/post/lib/usePostInteractions'
@@ -18,6 +19,7 @@ interface Props {
   postId: number
   author: string
   authorProfileImage?: string
+  categoryName?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -141,6 +143,7 @@ const formatCount = (count: number | string) => {
           <img v-if="authorProfileImage" :src="authorProfileImage" alt="Author" class="author-avatar" />
           <div v-else class="author-avatar placeholder"></div>
           <span class="author-name">{{ author }}</span>
+          <Badge v-if="categoryName" variant="secondary" size="small">{{ categoryName }}</Badge>
         </div>
         <h2 class="post-title">{{ title }}</h2>
       </header>

@@ -45,7 +45,8 @@ const getPostProps = (item: DisplayItem) => {
     isLiked: post.is_liked,
     postId: post.id,
     author: post.author_username,
-    authorProfileImage: post.author_profile_image
+    authorProfileImage: post.author_profile_image,
+    categoryName: post.category_name
   }
 }
 
@@ -144,7 +145,7 @@ watch(virtualRows, (newRows) => {
 <style scoped>
 .shorts-page {
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   background: var(--color-white);
 }
 
@@ -178,7 +179,7 @@ watch(virtualRows, (newRows) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 100dvh;
   color: var(--color-gray-600);
 }
 

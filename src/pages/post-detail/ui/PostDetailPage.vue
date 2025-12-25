@@ -106,7 +106,8 @@ const getPostProps = (p: Post) => {
     isLiked: p.is_liked,
     postId: p.id,
     author: p.author_username,
-    authorProfileImage: p.author_profile_image
+    authorProfileImage: p.author_profile_image,
+    categoryName: p.category_name
   }
 }
 
@@ -210,7 +211,7 @@ onMounted(async () => {
 
 <style scoped>
 .post-detail-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--color-white);
   padding-bottom: 80px;
 }

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
 import { Button } from '@/shared/ui/button'
+import { Badge } from '@/shared/ui/badge'
 import { CommentList } from '@/features/comment'
 import { postKeys } from '@/entities/post'
 import { useMarkdown } from '@/entities/post/lib/useMarkdown'
@@ -20,6 +21,7 @@ interface Props {
   postId: number
   disableViewTracking?: boolean
   authorProfileImage?: string
+  categoryName?: string
 }
 
 const emit = defineEmits<{
@@ -62,8 +64,8 @@ const {
 } = usePostInteractions(props, [postKeys.likedList({ page_size: 10 })])
 
 const onReport = async () => {
-  const success = await handleReport(reportReason.value)
   handleCloseReasonModal()
+  const success = await handleReport(reportReason.value)
   if (success) {
     emit('remove', props.postId)
   }
@@ -131,6 +133,7 @@ const formatCount = (count: number | string) => {
           <img v-if="authorProfileImage" :src="authorProfileImage" alt="Author" class="author-avatar" />
           <div v-else class="author-avatar placeholder"></div>
           <span class="author-name">{{ author }}</span>
+          <Badge v-if="categoryName" variant="secondary" size="small">{{ categoryName }}</Badge>
         </div>
         <h2 class="post-title">{{ title }}</h2>
       </header>

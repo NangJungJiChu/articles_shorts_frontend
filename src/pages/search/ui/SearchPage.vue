@@ -62,13 +62,8 @@ watch(() => route.query.reset, (newVal) => {
             <div class="search-bar">
                 <div class="input-wrapper">
                     <Icon name="search" size="small" class="search-icon-inner" />
-                    <input
-                        v-model="query"
-                        type="text"
-                        placeholder="검색어를 입력하세요..."
-                        class="search-input"
-                        @keyup.enter="handleSearch()"
-                    />
+                    <input v-model="query" type="text" placeholder="검색어를 입력하세요..." class="search-input"
+                        @keyup.enter="handleSearch()" />
                 </div>
                 <button class="search-btn" @click="handleSearch()">
                     검색
@@ -128,7 +123,7 @@ watch(() => route.query.reset, (newVal) => {
 .search-page {
     padding-bottom: 80px;
     background-color: var(--color-white);
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
 }
@@ -329,6 +324,8 @@ watch(() => route.query.reset, (newVal) => {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

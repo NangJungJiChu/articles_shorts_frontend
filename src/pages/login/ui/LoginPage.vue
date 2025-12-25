@@ -74,7 +74,7 @@ const handleLogin = async () => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 100dvh;
     padding: 16px;
     background-color: var(--color-white);
 }

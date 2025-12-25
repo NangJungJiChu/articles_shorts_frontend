@@ -51,7 +51,8 @@ const getPostProps = (item: DisplayItem) => {
     isLiked: post.is_liked,
     postId: post.id,
     author: post.author_username,
-    authorProfileImage: post.author_profile_image
+    authorProfileImage: post.author_profile_image,
+    categoryName: post.category_name
   }
 }
 
@@ -170,7 +171,7 @@ onUnmounted(() => {
 <style scoped>
 .home-page {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding-bottom: 80px;
   /* Space for bottom tab bar */
   background-color: var(--color-white);

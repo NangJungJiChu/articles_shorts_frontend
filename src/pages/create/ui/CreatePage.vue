@@ -57,13 +57,8 @@ const handleBack = () => {
             </button>
             <h1 class="page-title">새 게시글</h1>
             <div class="header-actions">
-                <Button
-                    size="small"
-                    variant="primary"
-                    class="complete-btn"
-                    @click="submitPost"
-                    :disabled="isSubmitting"
-                >
+                <Button size="small" variant="primary" class="complete-btn" @click="submitPost"
+                    :disabled="isSubmitting">
                     {{ isSubmitting ? '작성 중...' : '완료' }}
                 </Button>
             </div>
@@ -106,13 +101,8 @@ const handleBack = () => {
 
                 <!-- Image Upload Button -->
                 <div class="upload-actions">
-                    <Button
-                        variant="secondary"
-                        size="small"
-                        @click="triggerFileUpload"
-                        :disabled="isUploading || isSubmitting"
-                        class="upload-btn"
-                    >
+                    <Button variant="secondary" size="small" @click="triggerFileUpload"
+                        :disabled="isUploading || isSubmitting" class="upload-btn">
                         <div class="btn-content">
                             <Icon name="image" />
                             <span>{{ isUploading ? '업로드 중...' : '이미지 추가' }}</span>
@@ -136,7 +126,7 @@ const handleBack = () => {
 .create-page {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh;
     background-color: var(--color-white);
 }
 
@@ -203,7 +193,8 @@ const handleBack = () => {
     display: flex;
     flex-direction: column;
     padding: 16px;
-    padding-bottom: 58px; /* Safe area for bottom nav/actions if needed */
+    padding-bottom: 58px;
+    /* Safe area for bottom nav/actions if needed */
     overflow-y: auto;
 }
 
