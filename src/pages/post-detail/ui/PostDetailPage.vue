@@ -63,7 +63,9 @@ const fetchPost = async (id: string) => {
 
     // 2. Fetch main post
     const data = await getPostDetail(id)
-    
+
+    isLoading.value = false;
+
     // 3. Proactive Check
     if ((data.is_nsfw || data.is_profane) && !userVerified.value) {
       isNeedsPass.value = true
@@ -72,7 +74,7 @@ const fetchPost = async (id: string) => {
     } else {
       post.value = data
     }
-    
+
     if (post.value) {
       try {
         const resp = await httpClient.get<any>(`/posts/${id}/similar/`)
@@ -81,7 +83,7 @@ const fetchPost = async (id: string) => {
         console.warn('Failed to fetch similar posts:', err)
       }
     }
-    
+
     window.scrollTo(0, 0)
   } catch (error: any) {
     console.error('Failed to fetch post:', error)
@@ -130,7 +132,7 @@ onMounted(async () => {
   } else if (verification === 'fail') {
     const reason = route.query.reason
     if (reason === 'underage') {
-       alert('본인인증 실패: 19세 미만은 본 콘텐츠를 이용하실 수 없습니다.')
+      alert('본인인증 실패: 19세 미만은 본 콘텐츠를 이용하실 수 없습니다.')
     }
     router.replace({ query: {} })
   }
@@ -145,7 +147,7 @@ onMounted(async () => {
 <template>
   <div class="post-detail-page">
     <header class="detail-header">
-      <button class="back-btn" @click="router.back()">
+      <button class="back-btn" @click="router.push('/')">
         <Icon name="arrow_back" />
       </button>
       <h1 class="header-title">게시글</h1>
@@ -166,14 +168,14 @@ onMounted(async () => {
       <div v-else-if="isError" class="state-container">
         <Icon name="error_outline" size="large" />
         <p>게시글을 찾을 수 없거나 불러오는데 실패했습니다.</p>
-        <button class="retry-btn" @click="fetchPost">다시 시도</button>
+        <button class="retry-btn" @click="fetchPost(route.params.id as string)">다시 시도</button>
       </div>
 
       <div v-else-if="isNeedsPass" class="state-container nsfw-container">
         <div class="nsfw-badge">19</div>
         <h2 class="nsfw-title">연령 제한 콘텐츠</h2>
         <p class="nsfw-desc">본 게시물은 본인 인증이 필요합니다.<br>간편인증을 통해 본인 확인을 완료해주세요.</p>
-        
+
         <div class="legal-notice">
           안전한 서비스 이용을 위해 정보통신망법에 의거하여<br>본인 확인 절차를 진행합니다.
         </div>
@@ -187,17 +189,13 @@ onMounted(async () => {
       <template v-else-if="post">
         <!-- Main Post Card -->
         <FeedCard v-bind="getPostProps(post)" />
-        
+
         <!-- Similar Posts Section -->
         <div v-if="similarPosts.length > 0" class="similar-posts">
           <h2 class="section-title">관련된 게시글</h2>
           <div class="similar-list">
-            <div 
-              v-for="sim in similarPosts" 
-              :key="sim.id" 
-              class="similar-item"
-              @click="router.push({ name: 'post-detail', params: { id: sim.id } })"
-            >
+            <div v-for="sim in similarPosts" :key="sim.id" class="similar-item"
+              @click="router.push({ name: 'post-detail', params: { id: sim.id } })">
               <h3 class="sim-title">{{ sim.title }}</h3>
               <span class="sim-author">by {{ sim.author_username }}</span>
             </div>
@@ -205,11 +203,7 @@ onMounted(async () => {
         </div>
       </template>
 
-      <SimpleAuthModal 
-        :is-open="isPassModalOpen"
-        @close="isPassModalOpen = false"
-        @verified="handlePassVerified"
-      />
+      <SimpleAuthModal :is-open="isPassModalOpen" @close="isPassModalOpen = false" @verified="handlePassVerified" />
     </main>
   </div>
 </template>
@@ -308,7 +302,9 @@ onMounted(async () => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .retry-btn {
@@ -380,17 +376,17 @@ onMounted(async () => {
 }
 
 .nsfw-badge {
-    width: 60px;
-    height: 60px;
-    background: #e11d48;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    font-weight: 800;
-    margin-bottom: 20px;
+  width: 60px;
+  height: 60px;
+  background: #e11d48;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 20px;
 }
 
 .nsfw-title {
@@ -408,14 +404,14 @@ onMounted(async () => {
 }
 
 .legal-notice {
-    margin: 32px 0;
-    padding: 16px;
-    background: #f8fafc;
-    border-radius: 12px;
-    font-size: 13px;
-    color: #64748b;
-    line-height: 1.5;
-    width: 100%;
+  margin: 32px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  width: 100%;
 }
 
 .pass-btn {
@@ -437,12 +433,12 @@ onMounted(async () => {
 }
 
 .pass-btn:hover {
-    background-color: #2563eb;
-    transform: translateY(-2px);
+  background-color: #2563eb;
+  transform: translateY(-2px);
 }
 
 .pass-btn:active {
-    transform: scale(0.98);
+  transform: scale(0.98);
 }
 
 .back-link {

@@ -39,7 +39,7 @@ const handleWithdrawal = async () => {
   if (!confirm('정말로 탈퇴하시겠습니까? 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
     return
   }
-  
+
   try {
     await httpClient.delete('/accounts/api/user/delete/')
     alert('회원 탈퇴가 완료되었습니다.')
@@ -124,7 +124,7 @@ onMounted(async () => {
     // Save tokens if provided
     const access = route.query.access as string
     const refresh = route.query.refresh as string
-    
+
     if (access && refresh) {
       localStorage.setItem('accessToken', access)
       localStorage.setItem('refreshToken', refresh)
@@ -158,7 +158,7 @@ onUnmounted(() => {
       <div class="profile-info">
         <ProfileImageUploader :current-image-url="authStore.user?.profile_img" />
         <h2 class="username">{{ authStore.user?.username }}</h2>
-        
+
         <!-- Verification Status -->
         <div class="verification-status">
           <div v-if="authStore.user?.is_pass_verified" class="verified-badge">
@@ -186,16 +186,9 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <SimpleAuthModal 
-        :is-open="isPassModalOpen"
-        @close="isPassModalOpen = false"
-        @verified="handlePassVerified"
-      />
+      <SimpleAuthModal :is-open="isPassModalOpen" @close="isPassModalOpen = false" @verified="handlePassVerified" />
 
-      <PasswordChangeModal
-        :is-open="isPasswordModalOpen"
-        @close="isPasswordModalOpen = false"
-      />
+      <PasswordChangeModal :is-open="isPasswordModalOpen" @close="isPasswordModalOpen = false" />
     </header>
 
     <div class="tabs-container">
@@ -356,7 +349,8 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   width: 100%;
-  max-width: 400px; /* Increased max-width for better spacing */
+  max-width: 400px;
+  /* Increased max-width for better spacing */
 }
 
 .action-buttons-grid {
@@ -367,14 +361,17 @@ onUnmounted(() => {
 }
 
 :deep(.profile-action-btn) {
-  width: 100%;
-  height: 48px; /* Taller touch target */
+  width: fit-content;
+  padding: 0 16px;
+  height: 48px;
+  /* Taller touch target */
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
   font-weight: 600;
-  border-radius: 12px; /* Smoother corners */
+  border-radius: 12px;
+  /* Smoother corners */
 }
 
 .withdrawal-btn {

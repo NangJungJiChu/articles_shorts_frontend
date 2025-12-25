@@ -7,6 +7,7 @@ export interface Post {
   category: string
   category_name: string
   is_nsfw: boolean
+  is_profane: boolean
   is_liked: boolean
   like_count: number
   created_at: string

@@ -303,19 +303,16 @@ const formatCount = (count: number | string) => {
 
 /* Interaction Footer */
 .post-footer {
-  padding: 0 16px; /* Reset padding to be consistent, but we will use auto margin on the button if needed, or maybe just remove right padding? */
-  /* User wants it "at the end". If 16px is too much, maybe they mean flush? */
-  /* Let's try separate padding for left and right to push it closer if that's the request, or ensure width is 100% */
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 16px;
 }
 
 .interaction-group {
   display: flex;
   align-items: center;
-  gap: 16px; 
+  gap: 16px;
 }
 
 .action-btn {
