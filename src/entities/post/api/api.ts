@@ -30,6 +30,8 @@ export interface CreatePostPayload {
   title: string
   body: string
   category?: string
+  is_nsfw?: boolean
+  is_profane?: boolean
 }
 
 export async function createPost(

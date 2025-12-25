@@ -21,6 +21,7 @@ const routes = [
   { path: '/create', name: 'create', component: CreatePage, meta: { requiresAuth: true } },
   { path: '/search', name: 'search', component: SearchPage, meta: { requiresAuth: true } },
   { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
+  { path: '/posts', redirect: '/' },
   { path: '/posts/:id', name: 'post-detail', component: () => import('@/pages/post-detail/ui').then(m => m.PostDetailPage), meta: { requiresAuth: true } },
 ]
 

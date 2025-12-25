@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Icon } from '@/shared/ui/icon'
 import { useQueryClient } from '@tanstack/vue-query'
 import { postKeys } from '@/entities/post'
 
 const route = useRoute()
+const router = useRouter()
 const queryClient = useQueryClient()
 
 const handleHomeClick = async (navigate: () => void) => {
@@ -22,6 +23,14 @@ const handleShortsClick = async (navigate: () => void) => {
     }
     navigate()
 }
+
+const handleSearchClick = (navigate: () => void) => {
+    if (route.name === 'search') {
+        router.push({ name: 'search', query: { reset: 'true' } })
+    } else {
+        navigate()
+    }
+}
 </script>
 
 <template>
@@ -36,7 +45,7 @@ const handleShortsClick = async (navigate: () => void) => {
 
         <!-- Search Tab -->
         <RouterLink :to="{ name: 'search' }" custom v-slot="{ navigate, isActive }">
-            <button class="tab-item" :class="{ 'is-active': isActive }" @click="navigate">
+            <button class="tab-item" :class="{ 'is-active': isActive }" @click="handleSearchClick(navigate)">
                 <Icon name="search" :type="isActive ? 'filled' : 'outlined'" />
                 <span class="tab-label">Search</span>
             </button>

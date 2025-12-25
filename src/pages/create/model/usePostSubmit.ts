@@ -1,5 +1,5 @@
 
-import {  type Ref } from 'vue'
+import { type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { uploadImage } from '@/features/upload/api/uploadImage'
 import { useCreatePostMutation } from '@/entities/post'
@@ -9,9 +9,11 @@ interface UsePostSubmitProps {
     content: Ref<string>
     categoryId: Ref<string | null>
     pendingImages: Ref<Map<string, File>>
+    isNsfw: Ref<boolean>
+    isProfane: Ref<boolean>
 }
 
-export function usePostSubmit({ title, content, categoryId, pendingImages }: UsePostSubmitProps) {
+export function usePostSubmit({ title, content, categoryId, pendingImages, isNsfw, isProfane }: UsePostSubmitProps) {
     const router = useRouter()
     const { mutate: createPost, isPending: isSubmitting } = useCreatePostMutation()
 
@@ -64,7 +66,9 @@ export function usePostSubmit({ title, content, categoryId, pendingImages }: Use
                 {
                     title: title.value,
                     body: finalContent,
-                    category: categoryId.value
+                    category: categoryId.value,
+                    is_nsfw: isNsfw.value,
+                    is_profane: isProfane.value
                 },
                 {
                     onSuccess: () => {

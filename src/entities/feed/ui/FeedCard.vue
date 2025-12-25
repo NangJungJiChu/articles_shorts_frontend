@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, toRef, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Icon } from '@/shared/ui/icon'
 import { Modal } from '@/shared/ui/modal'
 import { Button } from '@/shared/ui/button'
@@ -26,10 +27,25 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<Props>()
+const router = useRouter()
 
 // Refs for composables
 const cardRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
+const showShareTooltip = ref(false)
+
+const handleShare = async () => {
+  const url = `${window.location.origin}/posts/${props.postId}`
+  try {
+    await navigator.clipboard.writeText(url)
+    showShareTooltip.value = true
+    setTimeout(() => {
+      showShareTooltip.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy link:', err)
+  }
+}
 
 // 1. Post Interactions (Like, Delete, etc.)
 // Passing invalidation keys for both general lists and the liked list
@@ -134,6 +150,19 @@ const formatCount = (count: number | string) => {
         <Icon name="chat_bubble" />
         <span class="count">{{ formatCount(localCommentsCount) }}</span>
       </button>
+
+      <!-- Share Button -->
+      <div class="share-container">
+        <button class="action-btn share-btn" @click="handleShare">
+          <Icon name="send" />
+        </button>
+        <Transition name="fade">
+          <div v-if="showShareTooltip" class="share-tooltip">
+            <Icon name="check_circle" size="small" />
+            링크 복사 완료
+          </div>
+        </Transition>
+      </div>
 
       <!-- More Options Button -->
       <button class="action-btn more-btn" @click="isMenuModalOpen = true">
@@ -363,5 +392,54 @@ const formatCount = (count: number | string) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+/* Share Tooltip Styles */
+.share-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.share-tooltip {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-blue-900);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.share-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--color-blue-900);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
 }
 </style>

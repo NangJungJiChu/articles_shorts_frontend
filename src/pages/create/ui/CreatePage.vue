@@ -14,6 +14,8 @@ import { usePostSubmit } from '../model/usePostSubmit'
 const router = useRouter()
 const activeTab = ref<'write' | 'preview'>('write')
 const title = ref('')
+const isNsfw = ref(false)
+const isProfane = ref(false)
 
 // 1. Category Logic
 const { categoryId, categoryOptions } = useCategorySelect()
@@ -36,7 +38,9 @@ const { isSubmitting, submitPost } = usePostSubmit({
     title,
     content,
     categoryId,
-    pendingImages
+    pendingImages,
+    isNsfw,
+    isProfane
 })
 
 const handleBack = () => {
@@ -83,6 +87,18 @@ const handleBack = () => {
             </div>
             <div class="input-group">
                 <input v-model="title" type="text" placeholder="제목을 입력하세요" class="title-input" />
+            </div>
+
+            <!-- Content Gating Checkboxes -->
+            <div class="input-group gating-checks">
+                <label class="check-item">
+                    <input type="checkbox" v-model="isNsfw" />
+                    <span>음란물 포함 (NSFW)</span>
+                </label>
+                <label class="check-item">
+                    <input type="checkbox" v-model="isProfane" />
+                    <span>폭력성/비속어 포함</span>
+                </label>
             </div>
             <div class="editor-container">
                 <textarea ref="textareaRef" v-model="content" placeholder="내용을 입력하세요 (Markdown 지원)"
@@ -211,6 +227,35 @@ const handleBack = () => {
 
 .title-input::placeholder {
     color: var(--color-gray-400);
+}
+
+.gating-checks {
+    display: flex;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--color-gray-700);
+    cursor: pointer;
+    background: var(--color-gray-50);
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.check-item:hover {
+    background: var(--color-gray-100);
+}
+
+.check-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
 }
 
 .editor-container {
