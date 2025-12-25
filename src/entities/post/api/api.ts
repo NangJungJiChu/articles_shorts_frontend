@@ -1,5 +1,5 @@
 import { httpClient } from '@/shared/api'
-import type { PostListResponse } from '../model/types'
+import type { PostListResponse, Post } from '../model/types'
 
 export interface GetPostListParams {
   page?: number
@@ -49,6 +49,11 @@ export async function getCategoryList(): Promise<Category[]> {
 
 export async function deletePost(postId: number): Promise<void> {
   await httpClient.delete(`/posts/delete/${postId}/`)
+}
+
+export async function getPostDetail(postId: number | string): Promise<Post> {
+  const { data } = await httpClient.get<Post>(`/posts/detail/${postId}/`)
+  return data
 }
 
 export async function getRecommendedPostList(page = 1): Promise<PostListResponse> {

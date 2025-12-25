@@ -21,7 +21,11 @@ onMounted(() => {
 <template>
     <div class="app-container">
         <div class="content-layout">
-            <RouterView />
+            <RouterView v-slot="{ Component }">
+                <keep-alive include="SearchPage">
+                    <component :is="Component" />
+                </keep-alive>
+            </RouterView>
             <div v-if="showBottomNav" class="bottom-nav-wrapper">
                 <BottomTabBar />
             </div>

@@ -21,13 +21,6 @@ export interface Comment {
   created_at: string
 }
 
-export interface Comment {
-  id: number
-  content: string
-  author_username: string
-  created_at: string
-}
-
 export interface PaginatedResponse<T> {
   count: number
   next: string | null

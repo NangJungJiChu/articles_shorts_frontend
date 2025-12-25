@@ -34,6 +34,14 @@ const handleShortsClick = async (navigate: () => void) => {
             </button>
         </RouterLink>
 
+        <!-- Search Tab -->
+        <RouterLink :to="{ name: 'search' }" custom v-slot="{ navigate, isActive }">
+            <button class="tab-item" :class="{ 'is-active': isActive }" @click="navigate">
+                <Icon name="search" :type="isActive ? 'filled' : 'outlined'" />
+                <span class="tab-label">Search</span>
+            </button>
+        </RouterLink>
+
         <!-- Shorts Tab -->
         <RouterLink :to="{ name: 'shorts' }" custom v-slot="{ navigate, isActive }">
             <button class="tab-item" :class="{ 'is-active': isActive }" @click="handleShortsClick(navigate)">
