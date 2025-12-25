@@ -5,6 +5,7 @@ import { ProfilePage } from '@/pages/profile/ui'
 import { LoginPage } from '@/pages/login/ui'
 import { SignupPage } from '@/pages/signup/ui'
 import { CreatePage } from '@/pages/create/ui'
+import { SearchPage } from '@/pages/search/ui'
 
 // ============================================
 // Routes
@@ -18,7 +19,10 @@ const routes = [
   { path: '/', name: 'home', component: HomePage, meta: { requiresAuth: true } },
   { path: '/shorts', name: 'shorts', component: ShortsPage, meta: { requiresAuth: true } },
   { path: '/create', name: 'create', component: CreatePage, meta: { requiresAuth: true } },
+  { path: '/search', name: 'search', component: SearchPage, meta: { requiresAuth: true } },
   { path: '/profile', name: 'profile', component: ProfilePage, meta: { requiresAuth: true } },
+  { path: '/posts', redirect: '/' },
+  { path: '/posts/:id', name: 'post-detail', component: () => import('@/pages/post-detail/ui').then(m => m.PostDetailPage), meta: { requiresAuth: true } },
 ]
 
 // ============================================

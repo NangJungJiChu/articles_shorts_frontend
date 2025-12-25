@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect, onUnmounted } from 'vue'
+import { ref, computed, watchEffect, onUnmounted, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ProfileTabs } from '@/widgets/profile-info/ui'
 import { ProfileImageUploader } from '@/features/profile/update-profile-image'
 import { FeedCard } from '@/entities/feed/ui'
@@ -8,14 +9,46 @@ import { useInfiniteMyPostListQuery, useInfiniteLikedPostListQuery, type Post } 
 import { useAuthStore } from '@/features/auth/model/store'
 import { Button } from '@/shared/ui/button'
 import { useRouter } from 'vue-router'
+import SimpleAuthModal from '@/shared/ui/modal/SimpleAuthModal.vue'
+import PasswordChangeModal from '@/shared/ui/modal/PasswordChangeModal.vue'
+import { httpClient } from '@/shared/api'
 
 const activeTab = ref<'likes' | 'posts'>('likes')
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+const isPassModalOpen = ref(false)
+const isPasswordModalOpen = ref(false)
+
+const handlePassVerified = async () => {
+  try {
+    isPassModalOpen.value = false
+    await httpClient.post('/accounts/api/pass-verification/')
+    await authStore.fetchUser()
+  } catch (err) {
+    console.error('Verification failed:', err)
+  }
+}
 
 const handleLogout = () => {
   authStore.logout()
   router.push('/login')
+}
+
+const handleWithdrawal = async () => {
+  if (!confirm('정말로 탈퇴하시겠습니까? 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.')) {
+    return
+  }
+
+  try {
+    await httpClient.delete('/accounts/api/user/delete/')
+    alert('회원 탈퇴가 완료되었습니다.')
+    authStore.logout()
+    router.push('/login')
+  } catch (err) {
+    console.error('Withdrawal failed:', err)
+    alert('회원 탈퇴 중 오류가 발생했습니다.')
+  }
 }
 
 
@@ -84,6 +117,34 @@ watchEffect(() => {
   }
 })
 
+onMounted(async () => {
+  // Check if we just came back from Kakao verification
+  const verification = route.query.verification
+  if (verification === 'success') {
+    // Save tokens if provided
+    const access = route.query.access as string
+    const refresh = route.query.refresh as string
+
+    if (access && refresh) {
+      localStorage.setItem('accessToken', access)
+      localStorage.setItem('refreshToken', refresh)
+    }
+
+    alert('카카오 본인인증(19+) 로그인에 성공했습니다!')
+    await authStore.fetchUser()
+    // Clean up query params
+    router.replace({ query: {} })
+  } else if (verification === 'fail') {
+    const reason = route.query.reason
+    if (reason === 'underage') {
+      alert('본인인증 실패: 19세 미만은 인증을 진행할 수 없습니다.')
+    } else {
+      alert('본인인증에 실패했습니다. 다시 시도해주세요.')
+    }
+    router.replace({ query: {} })
+  }
+})
+
 onUnmounted(() => {
   if (observer) {
     observer.disconnect()
@@ -97,10 +158,37 @@ onUnmounted(() => {
       <div class="profile-info">
         <ProfileImageUploader :current-image-url="authStore.user?.profile_img" />
         <h2 class="username">{{ authStore.user?.username }}</h2>
-        <Button variant="secondary" size="small" @click="handleLogout" class="logout-btn">
-          로그아웃
-        </Button>
+
+        <!-- Verification Status -->
+        <div class="verification-status">
+          <div v-if="authStore.user?.is_pass_verified" class="verified-badge">
+            <Icon name="verified" size="small" />
+            <span>본인인증 완료</span>
+          </div>
+          <button v-else class="verify-trigger-btn" @click="isPassModalOpen = true">
+            <Icon name="verified_user" size="small" />
+            간편인증 하기
+          </button>
+        </div>
+
+        <div class="account-actions">
+          <div class="action-buttons-grid">
+            <Button variant="secondary" class="profile-action-btn" @click="isPasswordModalOpen = true">
+              비밀번호 변경
+            </Button>
+            <Button variant="secondary" class="profile-action-btn" @click="handleLogout">
+              로그아웃
+            </Button>
+          </div>
+          <button class="withdrawal-btn" @click="handleWithdrawal">
+            회원 탈퇴
+          </button>
+        </div>
       </div>
+
+      <SimpleAuthModal :is-open="isPassModalOpen" @close="isPassModalOpen = false" @verified="handlePassVerified" />
+
+      <PasswordChangeModal :is-open="isPasswordModalOpen" @close="isPasswordModalOpen = false" />
     </header>
 
     <div class="tabs-container">
@@ -221,5 +309,82 @@ onUnmounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Verification Styles */
+.verification-status {
+  margin-top: -8px;
+}
+
+.verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0f7ff;
+  color: #3b82f6;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.verify-trigger-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  /* Increased max-width for better spacing */
+}
+
+.action-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+:deep(.profile-action-btn) {
+  width: fit-content;
+  padding: 0 16px;
+  height: 48px;
+  /* Taller touch target */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 12px;
+  /* Smoother corners */
+}
+
+.withdrawal-btn {
+  background: none;
+  border: none;
+  color: var(--color-gray-500);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.withdrawal-btn:hover {
+  color: var(--color-danger);
 }
 </style>

@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const httpClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseURL: 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,7 +34,7 @@ httpClient.interceptors.response.use(
         try {
           // Attempt refresh
           const { data } = await axios.post(
-            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/accounts/api/token/refresh/`,
+            'http://localhost:8000/accounts/api/token/refresh/',
             { refresh: refreshToken },
           )
 

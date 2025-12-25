@@ -7,6 +7,7 @@ export interface Post {
   category: string
   category_name: string
   is_nsfw: boolean
+  is_profane: boolean
   is_liked: boolean
   like_count: number
   created_at: string
@@ -18,13 +19,6 @@ export interface Comment {
   content: string
   author_username: string
   author_profile_image?: string
-  created_at: string
-}
-
-export interface Comment {
-  id: number
-  content: string
-  author_username: string
   created_at: string
 }
 

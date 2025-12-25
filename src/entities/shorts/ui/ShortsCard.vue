@@ -33,6 +33,20 @@ const emit = defineEmits<{
 // Refs for composables
 const cardRef = ref<HTMLElement | null>(null)
 const contentRef = ref<HTMLElement | null>(null)
+const showShareTooltip = ref(false)
+
+const handleShare = async () => {
+  const url = `${window.location.origin}/posts/${props.postId}`
+  try {
+    await navigator.clipboard.writeText(url)
+    showShareTooltip.value = true
+    setTimeout(() => {
+      showShareTooltip.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy link:', err)
+  }
+}
 
 // 1. Post Interactions (Like, Delete, Report, etc.)
 const {
@@ -146,6 +160,19 @@ const formatCount = (count: number | string) => {
         <Icon name="chat_bubble" class="icon" />
         <span class="count">{{ formatCount(localCommentsCount) }}</span>
       </button>
+
+      <!-- Share Button -->
+      <div class="share-container">
+        <button class="action-btn share-btn" @click.stop="handleShare">
+          <Icon name="send" class="icon" />
+        </button>
+        <Transition name="fade">
+          <div v-if="showShareTooltip" class="share-tooltip">
+            <Icon name="check_circle" size="small" />
+            링크 복사 완료
+          </div>
+        </Transition>
+      </div>
 
       <!-- More Options Button -->
       <button class="action-btn more-btn" @click.stop="isMenuModalOpen = true">
@@ -407,5 +434,55 @@ const formatCount = (count: number | string) => {
 .expand-text {
   color: var(--color-white);
   text-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Share Tooltip Styles */
+.share-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.share-tooltip {
+  position: absolute;
+  top: 50%;
+  right: 50px;
+  transform: translateY(-50%);
+  background-color: var(--color-blue-900);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.share-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 6px solid var(--color-blue-900);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateX(10px) translateY(-50%);
 }
 </style>
