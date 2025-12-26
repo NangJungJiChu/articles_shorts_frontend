@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getPostDetail } from '@/entities/post'
 import { FeedCard } from '@/entities/feed/ui'
@@ -8,6 +8,7 @@ import { httpClient } from '@/shared/api'
 import SimpleAuthModal from '@/shared/ui/modal/SimpleAuthModal.vue'
 import type { Post } from '@/entities/post'
 import { useAuthStore } from '@/features/auth/model/store'
+import { isAxiosError } from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,14 +21,14 @@ const isNeedsPass = ref(false)
 const isPassModalOpen = ref(false)
 const userVerified = ref(false)
 
-const checkUserStatus = async () => {
-  try {
-    const resp = await httpClient.get('/accounts/api/user/')
-    userVerified.value = resp.data.is_pass_verified
-  } catch (e) {
-    console.error('Failed to get user status', e)
-  }
-}
+// const checkUserStatus = async () => {
+//   try {
+//     const resp = await httpClient.get('/accounts/api/user/')
+//     userVerified.value = resp.data.is_pass_verified
+//   } catch (e) {
+//     console.error('Failed to get user status', e)
+//   }
+// }
 
 const handlePassVerified = async () => {
   try {
@@ -77,7 +78,7 @@ const fetchPost = async (id: string) => {
 
     if (post.value) {
       try {
-        const resp = await httpClient.get<any>(`/posts/${id}/similar/`)
+        const resp = await httpClient.get(`/posts/${id}/similar/`)
         similarPosts.value = resp.data.results || []
       } catch (err) {
         console.warn('Failed to fetch similar posts:', err)
@@ -85,9 +86,9 @@ const fetchPost = async (id: string) => {
     }
 
     window.scrollTo(0, 0)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to fetch post:', error)
-    if (error.response?.status === 403) {
+    if (isAxiosError(error) && error.response?.status === 403) {
       isNeedsPass.value = true
     } else {
       isError.value = true
@@ -148,7 +149,7 @@ onMounted(async () => {
 <template>
   <div class="post-detail-page">
     <header class="detail-header">
-      <button class="back-btn" @click="router.push('/')">
+      <button class="back-btn" @click="router.back()">
         <Icon name="arrow_back" />
       </button>
       <h1 class="header-title">게시글</h1>

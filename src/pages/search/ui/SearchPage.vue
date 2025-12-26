@@ -241,6 +241,7 @@ watch(() => route.query.reset, (newVal) => {
 }
 
 .result-list {
+  box-sizing: border-box;
   list-style: none;
   padding: 16px;
   margin: 0 auto;
